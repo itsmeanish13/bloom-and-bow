@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bloom & Bow — Flowers, wrapped like a small good thing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Karla:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FAF6F0;
+    --paper-warm:#F3ECDF;
+    --ink:#232A1F;
+    --ink-soft:#5B6155;
+    --berry:#B23A52;
+    --berry-deep:#8E2C40;
+    --sage:#7C9473;
+    --sage-deep:#5E7355;
+    --butter:#EFB94A;
+    --twine:#C9BBA1;
+    --twine-light:#E4DAC6;
+
+    --font-display: 'Fraunces', serif;
+    --font-body: 'Karla', sans-serif;
+    --font-tag: 'Space Mono', monospace;
+
+    --space-xs: 8px;
+    --space-sm: 16px;
+    --space-md: 24px;
+    --space-lg: 48px;
+    --space-xl: 88px;
+
+    --radius-card: 18px;
+    --ease: cubic-bezier(.22,.61,.36,1);
+  }
+
+  *{ box-sizing: border-box; }
+  html{ scroll-behavior: smooth; }
+  body{
+    margin:0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-body);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  img,svg{ display:block; max-width:100%; }
+  a{ color: inherit; }
+  button{ font-family: inherit; }
+
+  :focus-visible{
+    outline: 2.5px solid var(--berry);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+
+  .wrap{
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 var(--space-md);
+  }
+
+  /* ---------- NAV ---------- */
+  .nav{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding: var(--space-md) 0;
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap: 10px;
+    font-family: var(--font-display);
+    font-weight:600;
+    font-size: 1.35rem;
+    letter-spacing: -0.01em;
+  }
+  .brand-mark{ flex-shrink:0; }
+  .nav-links{
+    display:flex;
+    gap: var(--space-lg);
+    list-style:none;
+    padding:0; margin:0;
+    font-size: 0.95rem;
+  }
+  .nav-links a{
+    text-decoration:none;
+    position:relative;
+    padding-bottom: 4px;
+  }
+  .nav-links a::after{
+    content:"";
+    position:absolute; left:0; right:0; bottom:0;
+    height:2px; background: var(--berry);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform .25s var(--ease);
+  }
+  .nav-links a:hover::after{ transform: scaleX(1); }
+  .nav-actions{ display:flex; align-items:center; gap: var(--space-md); }
+  .icon-btn{
+    background:none; border:none; cursor:pointer;
+    color: var(--ink); padding:6px; border-radius: 8px;
+  }
+  .icon-btn:hover{ background: var(--twine-light); }
+  .cart-count{
+    display:inline-flex; align-items:center; justify-content:center;
+    background: var(--berry); color:#fff;
+    font-family: var(--font-tag); font-size: 0.65rem;
+    width:16px; height:16px; border-radius:50%;
+    position:relative; top:-8px; left:-6px;
+  }
+
+  @media (max-width: 780px){
+    .nav-links{ display:none; }
+  }
+
+  /* ---------- HERO ---------- */
+  .hero{
+    display:grid;
+    grid-template-columns: 1.05fr 0.95fr;
+    gap: var(--space-xl);
+    align-items:center;
+    padding: var(--space-lg) 0 var(--space-xl);
+  }
+  .eyebrow-tag{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    font-family: var(--font-tag);
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--berry-deep);
+    background: #fff;
+    border: 1px dashed var(--twine);
+    padding: 5px 12px 5px 8px;
+    border-radius: 999px;
+    margin-bottom: var(--space-md);
+  }
+  .eyebrow-tag .dot{
+    width:6px;height:6px;border-radius:50%;
+    background: var(--sage);
+  }
+  h1{
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(2.4rem, 4.4vw, 3.6rem);
+    line-height: 1.06;
+    letter-spacing: -0.015em;
+    margin: 0 0 var(--space-md);
+  }
+  h1 em{
+    font-style: italic;
+    font-weight: 500;
+    color: var(--berry);
+  }
+  .hero-sub{
+    font-size: 1.08rem;
+    color: var(--ink-soft);
+    max-width: 42ch;
+    margin: 0 0 var(--space-lg);
+  }
+  .hero-ctas{ display:flex; gap: var(--space-sm); align-items:center; flex-wrap: wrap; }
+
+  .btn{
+    display:inline-flex; align-items:center; gap:8px;
+    font-family: var(--font-body); font-weight: 700; font-size: 0.95rem;
+    padding: 13px 26px;
+    border-radius: 999px;
+    border: none;
+    cursor:pointer;
+    transition: transform .2s var(--ease), box-shadow .2s var(--ease), background .2s var(--ease);
+  }
+  .btn-primary{
+    background: var(--berry); color:#fff;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.08);
+  }
+  .btn-primary:hover{ background: var(--berry-deep); transform: translateY(-2px); box-shadow: 0 8px 18px -8px rgba(178,58,82,.55); }
+  .btn-primary:active{ transform: translateY(0); }
+  .btn-ghost{
+    background: transparent; color: var(--ink);
+    border: 1.5px solid var(--twine);
+  }
+  .btn-ghost:hover{ border-color: var(--ink); background: var(--paper-warm); }
+
+  .hero-art{
+    position:relative;
+    background: var(--paper-warm);
+    border-radius: 28px;
+    padding: var(--space-lg);
+    display:flex; align-items:center; justify-content:center;
+    min-height: 380px;
+  }
+  .price-tag{
+    position:absolute;
+    top: 22px; right: -14px;
+    background:#fff;
+    border: 1.5px solid var(--ink);
+    border-radius: 10px;
+    padding: 10px 16px 10px 12px;
+    font-family: var(--font-tag);
+    font-size: 0.8rem;
+    transform: rotate(6deg);
+    box-shadow: 3px 4px 0 var(--twine);
+  }
+  .price-tag .hole{
+    position:absolute; top:8px; left:8px;
+    width:6px; height:6px; border-radius:50%;
+    background: var(--paper); border: 1.5px solid var(--ink);
+  }
+  .price-tag .amt{ color: var(--berry-deep); font-weight:700; }
+
+  @media (max-width: 900px){
+    .hero{ grid-template-columns: 1fr; }
+    .hero-art{ order:-1; min-height: 260px; }
+  }
+
+  /* ---------- VINE DIVIDER (signature element) ---------- */
+  .vine-divider{ padding: var(--space-sm) 0 var(--space-lg); }
+  .vine-divider svg path{
+    stroke-dasharray: 900;
+    stroke-dashoffset: 900;
+    animation: draw 1.8s var(--ease) forwards;
+    animation-delay: .15s;
+  }
+  @media (prefers-reduced-motion: reduce){
+    .vine-divider svg path{ animation: none; stroke-dashoffset: 0; }
+  }
+  @keyframes draw{ to{ stroke-dashoffset: 0; } }
+
+  /* ---------- OCCASIONS ---------- */
+  .section-label{
+    font-family: var(--font-tag);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin: 0 0 var(--space-sm);
+  }
+  .occasions{
+    display:flex; gap: 10px; flex-wrap: wrap;
+    padding-bottom: var(--space-xl);
+  }
+  .chip{
+    font-size: 0.92rem; font-weight: 500;
+    padding: 10px 18px;
+    border-radius: 999px;
+    border: 1.5px solid var(--twine);
+    background: #fff;
+    cursor:pointer;
+    transition: all .2s var(--ease);
+  }
+  .chip:hover{ border-color: var(--sage-deep); background: var(--paper-warm); }
+  .chip[aria-pressed="true"]{
+    background: var(--sage); border-color: var(--sage); color:#fff;
+  }
+
+  /* ---------- PRODUCT GRID ---------- */
+  .grid-head{
+    display:flex; align-items:baseline; justify-content:space-between;
+    margin-bottom: var(--space-md);
+  }
+  h2{
+    font-family: var(--font-display); font-weight:600;
+    font-size: clamp(1.6rem, 2.6vw, 2.1rem);
+    margin:0;
+  }
+  .see-all{
+    font-size: 0.9rem; font-weight:700; text-decoration:none;
+    border-bottom: 1.5px solid var(--berry); padding-bottom:2px;
+  }
+
+  .grid{
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-md);
+    padding-bottom: var(--space-xl);
+  }
+  @media (max-width: 900px){ .grid{ grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 560px){ .grid{ grid-template-columns: 1fr; } }
+
+  .card{
+    background:#fff;
+    border-radius: var(--radius-card);
+    border: 1px solid var(--twine-light);
+    overflow:hidden;
+    transition: transform .25s var(--ease), box-shadow .25s var(--ease);
+  }
+  .card:hover{ transform: translateY(-4px); box-shadow: 0 16px 30px -18px rgba(35,42,31,.35); }
+  .card-art{
+    aspect-ratio: 4/3.1;
+    background: var(--paper-warm);
+    display:flex; align-items:center; justify-content:center;
+    position:relative;
+  }
+  .card-badge{
+    position:absolute; top:12px; left:12px;
+    font-family: var(--font-tag); font-size: 0.65rem;
+    background: var(--butter); color: var(--ink);
+    padding: 4px 9px; border-radius: 999px;
+    text-transform: uppercase; letter-spacing: .04em;
+  }
+  .card-body{ padding: var(--space-sm) var(--space-md) var(--space-md); }
+  .card-title{ font-weight:700; margin: 0 0 4px; font-size: 1.02rem; }
+  .card-desc{ color: var(--ink-soft); font-size: 0.88rem; margin: 0 0 var(--space-sm); }
+  .card-foot{ display:flex; align-items:center; justify-content:space-between; }
+  .card-price{ font-family: var(--font-tag); font-weight:700; color: var(--berry-deep); }
+  .add-btn{
+    width:36px; height:36px; border-radius:50%;
+    border: 1.5px solid var(--ink);
+    background:#fff; cursor:pointer;
+    font-size: 1.1rem; line-height:1;
+    transition: background .2s var(--ease), color .2s var(--ease), transform .2s var(--ease);
+  }
+  .add-btn:hover{ background: var(--ink); color:#fff; transform: rotate(90deg); }
+
+  /* ---------- STORY / NOTE ---------- */
+  .note{
+    background: var(--sage);
+    border-radius: 28px;
+    padding: var(--space-xl) var(--space-lg);
+    display:grid;
+    grid-template-columns: 0.7fr 1.3fr;
+    gap: var(--space-lg);
+    align-items:center;
+    color: #fff;
+    margin-bottom: var(--space-xl);
+  }
+  .seal{
+    width: 84px; height: 84px; border-radius:50%;
+    background: var(--berry);
+    display:flex; align-items:center; justify-content:center;
+    font-family: var(--font-display); font-style:italic; font-size:1.6rem;
+    box-shadow: 0 10px 24px -10px rgba(0,0,0,.35);
+  }
+  .note blockquote{
+    font-family: var(--font-display);
+    font-style: italic;
+    font-weight: 500;
+    font-size: clamp(1.3rem, 2.2vw, 1.7rem);
+    line-height: 1.35;
+    margin: 0 0 var(--space-sm);
+  }
+  .note cite{ font-style:normal; font-family: var(--font-tag); font-size: 0.8rem; opacity:.85; }
+
+  @media (max-width: 780px){
+    .note{ grid-template-columns: 1fr; text-align:left; padding: var(--space-lg); }
+  }
+
+  /* ---------- NEWSLETTER ---------- */
+  .signup{
+    border: 1.5px dashed var(--twine);
+    border-radius: 24px;
+    padding: var(--space-lg);
+    display:flex; align-items:center; justify-content:space-between;
+    gap: var(--space-md); flex-wrap:wrap;
+    margin-bottom: var(--space-xl);
+  }
+  .signup h3{
+    font-family: var(--font-display); font-weight:600;
+    font-size: 1.4rem; margin: 0 0 4px;
+  }
+  .signup p{ margin:0; color: var(--ink-soft); font-size: 0.92rem; }
+  .signup-form{ display:flex; gap: 10px; }
+  .signup-form input{
+    font-family: var(--font-body);
+    padding: 12px 16px;
+    border-radius: 999px;
+    border: 1.5px solid var(--twine);
+    background:#fff;
+    font-size: 0.92rem;
+    min-width: 220px;
+  }
+  .signup-form input:focus{ border-color: var(--ink); }
+
+  @media (max-width: 640px){
+    .signup-form{ width:100%; }
+    .signup-form input{ flex:1; min-width:0; }
+  }
+
+  /* ---------- FOOTER ---------- */
+  footer{
+    background: var(--ink);
+    color: var(--paper-warm);
+    padding: var(--space-xl) 0 var(--space-lg);
+  }
+  .foot-grid{
+    display:grid;
+    grid-template-columns: 1.4fr 1fr 1fr 1fr;
+    gap: var(--space-lg);
+    padding-bottom: var(--space-lg);
+  }
+  .foot-brand{ font-family: var(--font-display); font-size:1.25rem; margin-bottom: var(--space-sm); }
+  .foot-tag{ color: #A7AD9C; font-size: 0.88rem; max-width: 30ch; }
+  footer h4{
+    font-family: var(--font-tag); font-size: 0.7rem;
+    text-transform:uppercase; letter-spacing:.08em;
+    color: #A7AD9C; margin: 0 0 var(--space-sm);
+  }
+  footer ul{ list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:10px; }
+  footer a{ text-decoration:none; color: var(--paper-warm); font-size: 0.92rem; }
+  footer a:hover{ color: var(--butter); }
+  .foot-bottom{
+    border-top: 1px solid #3A4235;
+    padding-top: var(--space-md);
+    display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px;
+    font-size: 0.8rem; color: #7D8471;
+  }
+  @media (max-width: 780px){
+    .foot-grid{ grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <nav class="nav">
+    <div class="brand">
+      <svg class="brand-mark" width="30" height="30" viewBox="0 0 30 30" fill="none">
+        <circle cx="15" cy="15" r="14" fill="#7C9473"/>
+        <path d="M15 8c1.5 2 1.5 4 0 6-1.5-2-1.5-4 0-6z" fill="#EFB94A"/>
+        <path d="M9 15c2-1.5 4-1.5 6 0-2 1.5-4 1.5-6 0z" fill="#B23A52"/>
+        <path d="M21 15c-2-1.5-4-1.5-6 0 2 1.5 4 1.5 6 0z" fill="#B23A52"/>
+        <circle cx="15" cy="15" r="2.4" fill="#FAF6F0"/>
+      </svg>
+      Bloom &amp; Bow
+    </div>
+    <ul class="nav-links">
+      <li><a href="#">Flowers</a></li>
+      <li><a href="#">Little Gifts</a></li>
+      <li><a href="#">Occasions</a></li>
+      <li><a href="#">Our Story</a></li>
+    </ul>
+    <div class="nav-actions">
+      <button class="icon-btn" aria-label="Search">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="8.5" cy="8.5" r="6" stroke="currentColor" stroke-width="1.6"/><path d="M13.5 13.5L18 18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </button>
+      <button class="icon-btn" aria-label="Cart, 2 items">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 6h13l-1.4 8.2a1.5 1.5 0 0 1-1.48 1.3H6.88a1.5 1.5 0 0 1-1.48-1.3L4 6z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M7 6a3 3 0 0 1 6 0" stroke="currentColor" stroke-width="1.6"/></svg>
+        <span class="cart-count">2</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <header class="hero">
+    <div>
+      <span class="eyebrow-tag"><span class="dot"></span> Today's pick — No. 014</span>
+      <h1>Say it with<br>something <em>small</em><br>and alive.</h1>
+      <p class="hero-sub">Hand-tied bouquets and pocket-sized gifts, wrapped the same afternoon they're cut. Same-day delivery across the valley.</p>
+      <div class="hero-ctas">
+        <button class="btn btn-primary">Browse the shop →</button>
+        <button class="btn btn-ghost">Build a bouquet</button>
+      </div>
+    </div>
+    <div class="hero-art">
+      <svg width="220" height="240" viewBox="0 0 220 240" fill="none">
+        <path d="M110 240V120" stroke="#7C9473" stroke-width="4" stroke-linecap="round"/>
+        <ellipse cx="110" cy="70" rx="46" ry="52" fill="#B23A52"/>
+        <ellipse cx="70" cy="95" rx="34" ry="40" fill="#EFB94A"/>
+        <ellipse cx="150" cy="95" rx="34" ry="40" fill="#5E7355"/>
+        <circle cx="110" cy="80" r="14" fill="#FAF6F0"/>
+        <path d="M60 150c30-14 70-14 100 0v18c-30 14-70 14-100 0v-18z" fill="#F3ECDF" stroke="#C9BBA1" stroke-width="1.5"/>
+      </svg>
+      <div class="price-tag"><span class="hole"></span>from <span class="amt">Rs 650</span></div>
+    </div>
+  </header>
+
+  <div class="vine-divider">
+    <svg width="100%" height="26" viewBox="0 0 1180 26" preserveAspectRatio="none">
+      <path d="M0 13 Q 60 0, 120 13 T 240 13 T 360 13 T 480 13 T 600 13 T 720 13 T 840 13 T 960 13 T 1080 13 T 1180 13"
+            stroke="#C9BBA1" stroke-width="2" fill="none"/>
+    </svg>
+  </div>
+
+  <!-- OCCASIONS -->
+  <section aria-label="Shop by occasion">
+    <p class="section-label">Shop by occasion</p>
+    <div class="occasions">
+      <button class="chip" aria-pressed="true">Birthday</button>
+      <button class="chip" aria-pressed="false">Anniversary</button>
+      <button class="chip" aria-pressed="false">Just Because</button>
+      <button class="chip" aria-pressed="false">Thank You</button>
+      <button class="chip" aria-pressed="false">Sorry</button>
+      <button class="chip" aria-pressed="false">New Home</button>
+    </div>
+  </section>
+
+  <!-- PRODUCT GRID -->
+  <section aria-label="Featured products">
+    <div class="grid-head">
+      <h2>Fresh this week</h2>
+      <a class="see-all" href="#">See all →</a>
+    </div>
+    <div class="grid">
+
+      <article class="card">
+        <div class="card-art">
+          <span class="card-badge">Bestseller</span>
+          <svg width="90" height="90" viewBox="0 0 90 90"><circle cx="45" cy="45" r="18" fill="#B23A52"/><circle cx="26" cy="55" r="13" fill="#EFB94A"/><circle cx="64" cy="55" r="13" fill="#5E7355"/></svg>
+        </div>
+        <div class="card-body">
+          <h3 class="card-title">The Tuesday Bunch</h3>
+          <p class="card-desc">Seasonal stems, kraft-wrapped, no two ever quite the same.</p>
+          <div class="card-foot">
+            <span class="card-price">Rs 850</span>
+            <button class="add-btn" aria-label="Add The Tuesday Bunch to cart">+</button>
+          </div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-art">
+          <svg width="90" height="90" viewBox="0 0 90 90"><rect x="20" y="30" width="50" height="40" rx="6" fill="#EFB94A"/><rect x="20" y="30" width="50" height="10" fill="#B23A52"/></svg>
+        </div>
+        <div class="card-body">
+          <h3 class="card-title">Tiny Gift Box, Sunshine</h3>
+          <p class="card-desc">A small treat and a hand-written card, sealed with wax.</p>
+          <div class="card-foot">
+            <span class="card-price">Rs 480</span>
+            <button class="add-btn" aria-label="Add Tiny Gift Box, Sunshine to cart">+</button>
+          </div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-art">
+          <span class="card-badge">New</span>
+          <svg width="90" height="90" viewBox="0 0 90 90"><ellipse cx="45" cy="45" rx="30" ry="20" fill="#5E7355"/><circle cx="30" cy="38" r="8" fill="#B23A52"/><circle cx="60" cy="38" r="8" fill="#EFB94A"/></svg>
+        </div>
+        <div class="card-body">
+          <h3 class="card-title">Dried Everlasting Jar</h3>
+          <p class="card-desc">A bouquet that keeps going long after the others wilt.</p>
+          <div class="card-foot">
+            <span class="card-price">Rs 1,100</span>
+            <button class="add-btn" aria-label="Add Dried Everlasting Jar to cart">+</button>
+          </div>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- STORY -->
+  <section class="note">
+    <div class="seal">B&amp;B</div>
+    <div>
+      <blockquote>"We started in a kitchen with three buckets and a bike. The bike's still how most orders leave the shop."</blockquote>
+      <cite>— Nirmala, founder, Bloom &amp; Bow</cite>
+    </div>
+  </section>
+
+  <!-- NEWSLETTER -->
+  <section class="signup">
+    <div>
+      <h3>What's blooming this week</h3>
+      <p>One short note, every Friday. No spam, just flowers.</p>
+    </div>
+    <form class="signup-form" onsubmit="return false;">
+      <label for="email" class="visually-hidden" style="position:absolute;left:-9999px;">Email address</label>
+      <input id="email" type="email" placeholder="you@email.com" required>
+      <button class="btn btn-primary" type="submit">Subscribe</button>
+    </form>
+  </section>
+</div>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <div class="foot-brand">Bloom &amp; Bow</div>
+        <p class="foot-tag">Small bouquets and smaller gifts, delivered the same day, wrapped like they matter.</p>
+      </div>
+      <div>
+        <h4>Shop</h4>
+        <ul><li><a href="#">Flowers</a></li><li><a href="#">Gift Boxes</a></li><li><a href="#">Occasions</a></li></ul>
+      </div>
+      <div>
+        <h4>Help</h4>
+        <ul><li><a href="#">Delivery Areas</a></li><li><a href="#">Track Order</a></li><li><a href="#">Contact</a></li></ul>
+      </div>
+      <div>
+        <h4>Studio</h4>
+        <ul><li><a href="#">Our Story</a></li><li><a href="#">Careers</a></li><li><a href="#">Instagram</a></li></ul>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <span>© 2026 Bloom &amp; Bow</span>
+      <span>Made with care in the valley</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

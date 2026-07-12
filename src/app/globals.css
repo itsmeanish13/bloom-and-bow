@@ -1,0 +1,154 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-karla);
+  --font-mono: var(--font-space-mono);
+  --font-display: var(--font-fraunces);
+
+  /* Bloom & Bow Design Tokens */
+  --color-paper: #FAF6F0;
+  --color-paper-warm: #F3ECDF;
+  --color-ink: #232A1F;
+  --color-ink-soft: #5B6155;
+  --color-berry: #B23A52;
+  --color-berry-deep: #8E2C40;
+  --color-sage: #7C9473;
+  --color-sage-deep: #5E7355;
+  --color-butter: #EFB94A;
+  --color-twine: #C9BBA1;
+  --color-twine-light: #E4DAC6;
+
+  --color-primary: var(--berry);
+  --color-primary-foreground: #ffffff;
+  --color-secondary: var(--sage);
+  --color-secondary-foreground: #ffffff;
+  --color-accent: var(--butter);
+  --color-accent-foreground: var(--ink);
+  --color-muted: var(--paper-warm);
+  --color-muted-foreground: var(--ink-soft);
+  --color-card: #ffffff;
+  --color-card-foreground: var(--ink);
+  --color-border: var(--twine-light);
+  --color-input: var(--twine);
+  --color-ring: var(--berry);
+  --color-destructive: var(--berry);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  --radius: 1.125rem;
+  --background: #FAF6F0;
+  --foreground: #232A1F;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-paper text-ink;
+  font-family: var(--font-karla), sans-serif;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  margin: 0;
+}
+
+img, svg {
+  display: block;
+  max-width: 100%;
+}
+
+a {
+  color: inherit;
+}
+
+button {
+  font-family: inherit;
+}
+
+:focus-visible {
+  outline: 2.5px solid var(--berry);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* Vine divider animation */
+@keyframes vine-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.vine-path {
+  stroke-dasharray: 900;
+  stroke-dashoffset: 900;
+  animation: vine-draw 1.8s cubic-bezier(.22,.61,.36,1) forwards;
+  animation-delay: 0.15s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vine-path {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Custom scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: var(--paper-warm);
+  border-radius: 3px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--twine);
+  border-radius: 3px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--ink-soft);
+}
+
+/* Card hover */
+.bb-card {
+  transition: transform 0.25s cubic-bezier(.22,.61,.36,1), box-shadow 0.25s cubic-bezier(.22,.61,.36,1);
+}
+.bb-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 30px -18px rgba(35,42,31,.35);
+}
+
+/* Add button rotation */
+.add-btn-rotate:hover {
+  transform: rotate(90deg);
+}
+
+/* Nav link underline */
+.nav-link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: var(--berry);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.25s cubic-bezier(.22,.61,.36,1);
+}
+.nav-link:hover::after {
+  transform: scaleX(1);
+}
