@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useSyncExternalStore } from 'react'
 import { Search, ShoppingBag, Menu } from 'lucide-react'
 import BrandMark from './brand-mark'
 import { useCartStore } from '@/store/cart-store'
@@ -32,6 +32,8 @@ interface NavbarProps {
 
 export default function Navbar({ onCartOpen, onSearchOpen, onNavigate }: NavbarProps) {
   const [mobileOpen, setMobileOpen] = useState(false)
+  // useSyncExternalStore returns false on server, true on client — avoids hydration mismatch
+  const mounted = useSyncExternalStore(() => () => {}, () => true, () => false)
   const totalItems = useCartStore((s) => s.totalItems)
 
   function handleNavClick(action: string) {
@@ -78,11 +80,11 @@ export default function Navbar({ onCartOpen, onSearchOpen, onNavigate }: NavbarP
         </button>
         <button
           className="bg-transparent border-none cursor-pointer text-ink p-1.5 rounded-lg hover:bg-twine-light transition-colors relative"
-          aria-label={`Cart, ${totalItems()} items`}
+          aria-label={mounted ? `Cart, ${totalItems()} items` : 'Cart'}
           onClick={onCartOpen}
         >
           <ShoppingBag size={20} />
-          {totalItems() > 0 && (
+          {mounted && totalItems() > 0 && (
             <span className="inline-flex items-center justify-center bg-berry text-white font-[family-name:var(--font-space-mono)] text-[0.65rem] w-4 h-4 rounded-full absolute -top-2 -left-2">
               {totalItems()}
             </span>
@@ -101,11 +103,11 @@ export default function Navbar({ onCartOpen, onSearchOpen, onNavigate }: NavbarP
         </button>
         <button
           className="bg-transparent border-none cursor-pointer text-ink p-1.5 rounded-lg hover:bg-twine-light transition-colors relative"
-          aria-label={`Cart, ${totalItems()} items`}
+          aria-label={mounted ? `Cart, ${totalItems()} items` : 'Cart'}
           onClick={onCartOpen}
         >
           <ShoppingBag size={20} />
-          {totalItems() > 0 && (
+          {mounted && totalItems() > 0 && (
             <span className="inline-flex items-center justify-center bg-berry text-white font-[family-name:var(--font-space-mono)] text-[0.65rem] w-4 h-4 rounded-full absolute -top-2 -left-2">
               {totalItems()}
             </span>

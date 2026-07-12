@@ -144,7 +144,16 @@ export default function Footer({ onNavigate }: FooterProps) {
           style={{ borderColor: '#3A4235', color: '#7D8471' }}
         >
           <span>&copy; 2026 Bloom &amp; Bow</span>
-          <span>Made with care in the valley</span>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => onNavigate('admin')}
+              className="text-[0.8rem] bg-transparent border-none cursor-pointer p-0 hover:text-butter transition-colors"
+              style={{ color: '#7D8471' }}
+            >
+              Admin
+            </button>
+            <span>Made with care in the valley</span>
+          </div>
         </div>
       </div>
     </footer>

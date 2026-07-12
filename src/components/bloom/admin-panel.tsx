@@ -994,16 +994,23 @@ function NewsletterTab() {
   );
 }
 
-// ─── Main Admin Page ─────────────────────────────────────────────────────────
+// ─── Admin Overlay Component ──────────────────────────────────────────────
 
-export default function AdminPage() {
+interface AdminPanelProps {
+  open: boolean;
+  onClose: () => void;
+}
+
+export default function AdminPanel({ open, onClose }: AdminPanelProps) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [checkingAuth, setCheckingAuth] = useState(true);
+  const [checkingAuth, setCheckingAuth] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Check existing auth on mount
+  // Check existing auth when opened
   useEffect(() => {
+    if (!open) return;
+    setCheckingAuth(true);
     (async () => {
       try {
         const res = await fetch("/api/admin/stats");
@@ -1016,7 +1023,7 @@ export default function AdminPage() {
         setCheckingAuth(false);
       }
     })();
-  }, []);
+  }, [open]);
 
   const handleLogin = () => {
     setIsAuthenticated(true);
@@ -1030,23 +1037,19 @@ export default function AdminPage() {
     }
     setIsAuthenticated(false);
     toast.success("Logged out");
+    onClose();
   };
 
-  // Show loading while checking auth
-  if (checkingAuth) {
-    return (
-      <div className="min-h-screen bg-paper flex items-center justify-center">
-        <div className="w-10 h-10 rounded-full bg-berry/20 animate-pulse" />
-      </div>
-    );
-  }
+  if (!open) return null;
 
-  if (!isAuthenticated) {
-    return <LoginScreen onLogin={handleLogin} />;
-  }
-
-  return (
-    <div className="min-h-screen bg-paper flex">
+  const content = checkingAuth ? (
+    <div className="flex-1 flex items-center justify-center">
+      <div className="w-10 h-10 rounded-full bg-berry/20 animate-pulse" />
+    </div>
+  ) : !isAuthenticated ? (
+    <LoginScreen onLogin={handleLogin} />
+  ) : (
+    <div className="flex-1 flex min-h-0">
       <SidebarNav
         activeTab={activeTab}
         onTabChange={setActiveTab}
@@ -1055,7 +1058,7 @@ export default function AdminPage() {
         onToggle={() => setSidebarOpen((p) => !p)}
       />
 
-      <main className="flex-1 min-w-0">
+      <main className="flex-1 min-w-0 overflow-y-auto">
         {/* Mobile header spacer */}
         <div className="h-14 lg:hidden" />
 
@@ -1080,6 +1083,22 @@ export default function AdminPage() {
           {activeTab === "newsletter" && <NewsletterTab />}
         </div>
       </main>
+    </div>
+  );
+
+  return (
+    <div className="fixed inset-0 z-[100] bg-paper flex flex-col">
+      {/* Close button (when not authenticated) */}
+      {!isAuthenticated && (
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 z-[110] w-9 h-9 rounded-full bg-white border border-twine-light flex items-center justify-center cursor-pointer text-ink-soft hover:text-ink hover:bg-paper-warm transition-colors"
+          aria-label="Close admin"
+        >
+          <X className="w-4 h-4" />
+        </button>
+      )}
+      {content}
     </div>
   );
 }

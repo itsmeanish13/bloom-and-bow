@@ -17,6 +17,7 @@ import CartDrawer from '@/components/bloom/cart-drawer'
 import SearchDialog from '@/components/bloom/search-dialog'
 import BuildBouquetDialog from '@/components/bloom/build-bouquet-dialog'
 import TrackOrderDialog from '@/components/bloom/track-order-dialog'
+import AdminPanel from '@/components/bloom/admin-panel'
 import { useCartStore } from '@/store/cart-store'
 import type { Product } from '@/lib/types'
 import { toast } from 'sonner'
@@ -26,6 +27,7 @@ export default function Home() {
   const [searchOpen, setSearchOpen] = useState(false)
   const [bouquetOpen, setBouquetOpen] = useState(false)
   const [trackOrderOpen, setTrackOrderOpen] = useState(false)
+  const [adminOpen, setAdminOpen] = useState(false)
   const [selectedOccasion, setSelectedOccasion] = useState<string | null>(null)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [products, setProducts] = useState<Product[]>([])
@@ -113,6 +115,9 @@ export default function Home() {
           break
         case 'build-bouquet':
           setBouquetOpen(true)
+          break
+        case 'admin':
+          setAdminOpen(true)
           break
         default:
           break
@@ -257,6 +262,9 @@ export default function Home() {
         open={trackOrderOpen}
         onOpenChange={setTrackOrderOpen}
       />
+
+      {/* Admin Panel Overlay */}
+      <AdminPanel open={adminOpen} onClose={() => setAdminOpen(false)} />
     </div>
   )
 }
