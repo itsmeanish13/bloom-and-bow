@@ -125,3 +125,29 @@ Stage Summary:
 - No console errors, no hydration issues
 - Responsive design confirmed on both viewports
 - Professional visual quality confirmed by VLM
+
+---
+Task ID: 8-13
+Agent: main
+Task: Add missing sections and wire all navigation links
+
+Work Log:
+- Created how-it-works.tsx: 3-step "From stem to doorstep" section (You pick → We wrap → Delivered today)
+- Created delivery-section.tsx: Same-day delivery info, 3 info cards, 5 zone area list (Kathmandu, Lalitpur, Bhaktapur)
+- Created contact-section.tsx: Phone/WhatsApp, email, studio address/hours + contact form
+- Created careers-section.tsx: 3 job listings (Bouquet Designer, Delivery Rider, Social Media)
+- Created build-bouquet-dialog.tsx: Custom bouquet builder with stem picker, 6 add-ons, price calculator, add to cart
+- Created track-order-dialog.tsx: Order tracking with timeline, rider info, ETA
+- Updated navbar.tsx: All nav links now functional buttons with onNavigate callback
+- Updated hero.tsx: "Browse the shop" scrolls to products, "Build a bouquet" opens dialog
+- Updated footer.tsx: All footer links are now functional buttons (Flowers, Gift Boxes, Occasions, Delivery Areas, Track Order, Contact, Our Story, Careers, Instagram external)
+- Updated page.tsx: Added section refs, handleNavigate master navigation function, all new sections and dialogs
+
+Stage Summary:
+- 6 new components/sections added (18 total)
+- Every nav link, hero button, and footer link is now fully functional
+- Navigation uses smooth scroll with offset for sticky nav
+- Category nav links also apply filters (Flowers → 6 products, Little Gifts → 3 products)
+- Dialog-based navigation for Build a Bouquet and Track Order
+- VLM confirmed 11 distinct sections, rated complete website 8/10
+- All interactions verified with agent browser

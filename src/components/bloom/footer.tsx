@@ -1,15 +1,26 @@
 'use client'
 
-export default function Footer() {
+interface FooterProps {
+  onNavigate: (action: string) => void
+}
+
+export default function Footer({ onNavigate }: FooterProps) {
+  function handleLink(action: string) {
+    onNavigate(action)
+  }
+
   return (
     <footer className="bg-ink text-paper-warm pt-[5.5rem] pb-12">
       <div className="max-w-[1180px] mx-auto px-6">
         <div className="grid grid-cols-[1.4fr_1fr_1fr_1fr] max-[780px]:grid-cols-2 gap-12 pb-12">
           {/* Brand column */}
           <div>
-            <div className="font-[family-name:var(--font-fraunces)] text-[1.25rem] mb-4">
+            <button
+              onClick={() => handleLink('top')}
+              className="font-[family-name:var(--font-fraunces)] text-[1.25rem] mb-4 bg-transparent border-none cursor-pointer p-0 text-paper-warm hover:text-butter transition-colors text-left"
+            >
               Bloom &amp; Bow
-            </div>
+            </button>
             <p className="text-[0.88rem] max-w-[30ch] m-0" style={{ color: '#A7AD9C' }}>
               Small bouquets and smaller gifts, delivered the same day, wrapped
               like they matter.
@@ -25,9 +36,30 @@ export default function Footer() {
               Shop
             </h4>
             <ul className="flex flex-col gap-2.5 list-none p-0 m-0">
-              <li><a href="#" className="text-paper-warm text-[0.92rem] no-underline hover:text-butter transition-colors">Flowers</a></li>
-              <li><a href="#" className="text-paper-warm text-[0.92rem] no-underline hover:text-butter transition-colors">Gift Boxes</a></li>
-              <li><a href="#" className="text-paper-warm text-[0.92rem] no-underline hover:text-butter transition-colors">Occasions</a></li>
+              <li>
+                <button
+                  onClick={() => handleLink('flowers')}
+                  className="text-paper-warm text-[0.92rem] no-underline hover:text-butter transition-colors bg-transparent border-none cursor-pointer p-0 font-normal"
+                >
+                  Flowers
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => handleLink('gifts')}
+                  className="text-paper-warm text-[0.92rem] no-underline hover:text-butter transition-colors bg-transparent border-none cursor-pointer p-0 font-normal"
+                >
+                  Gift Boxes
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => handleLink('occasions')}
+                  className="text-paper-warm text-[0.92rem] no-underline hover:text-butter transition-colors bg-transparent border-none cursor-pointer p-0 font-normal"
+                >
+                  Occasions
+                </button>
+              </li>
             </ul>
           </div>
 
@@ -40,9 +72,30 @@ export default function Footer() {
               Help
             </h4>
             <ul className="flex flex-col gap-2.5 list-none p-0 m-0">
-              <li><a href="#" className="text-paper-warm text-[0.92rem] no-underline hover:text-butter transition-colors">Delivery Areas</a></li>
-              <li><a href="#" className="text-paper-warm text-[0.92rem] no-underline hover:text-butter transition-colors">Track Order</a></li>
-              <li><a href="#" className="text-paper-warm text-[0.92rem] no-underline hover:text-butter transition-colors">Contact</a></li>
+              <li>
+                <button
+                  onClick={() => handleLink('delivery')}
+                  className="text-paper-warm text-[0.92rem] no-underline hover:text-butter transition-colors bg-transparent border-none cursor-pointer p-0 font-normal"
+                >
+                  Delivery Areas
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => handleLink('track-order')}
+                  className="text-paper-warm text-[0.92rem] no-underline hover:text-butter transition-colors bg-transparent border-none cursor-pointer p-0 font-normal"
+                >
+                  Track Order
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => handleLink('contact')}
+                  className="text-paper-warm text-[0.92rem] no-underline hover:text-butter transition-colors bg-transparent border-none cursor-pointer p-0 font-normal"
+                >
+                  Contact
+                </button>
+              </li>
             </ul>
           </div>
 
@@ -55,9 +108,32 @@ export default function Footer() {
               Studio
             </h4>
             <ul className="flex flex-col gap-2.5 list-none p-0 m-0">
-              <li><a href="#" className="text-paper-warm text-[0.92rem] no-underline hover:text-butter transition-colors">Our Story</a></li>
-              <li><a href="#" className="text-paper-warm text-[0.92rem] no-underline hover:text-butter transition-colors">Careers</a></li>
-              <li><a href="#" className="text-paper-warm text-[0.92rem] no-underline hover:text-butter transition-colors">Instagram</a></li>
+              <li>
+                <button
+                  onClick={() => handleLink('story')}
+                  className="text-paper-warm text-[0.92rem] no-underline hover:text-butter transition-colors bg-transparent border-none cursor-pointer p-0 font-normal"
+                >
+                  Our Story
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => handleLink('careers')}
+                  className="text-paper-warm text-[0.92rem] no-underline hover:text-butter transition-colors bg-transparent border-none cursor-pointer p-0 font-normal"
+                >
+                  Careers
+                </button>
+              </li>
+              <li>
+                <a
+                  href="https://instagram.com/bloomandbow"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-paper-warm text-[0.92rem] no-underline hover:text-butter transition-colors"
+                >
+                  Instagram
+                </a>
+              </li>
             </ul>
           </div>
         </div>

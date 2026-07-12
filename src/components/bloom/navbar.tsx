@@ -12,37 +12,57 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet'
 
-const NAV_LINKS = ['Flowers', 'Little Gifts', 'Occasions', 'Our Story']
+interface NavItem {
+  label: string
+  action: string // key for the onNavigate callback
+}
+
+const NAV_LINKS: NavItem[] = [
+  { label: 'Flowers', action: 'flowers' },
+  { label: 'Little Gifts', action: 'gifts' },
+  { label: 'Occasions', action: 'occasions' },
+  { label: 'Our Story', action: 'story' },
+]
 
 interface NavbarProps {
   onCartOpen: () => void
   onSearchOpen: () => void
+  onNavigate: (action: string) => void
 }
 
-export default function Navbar({ onCartOpen, onSearchOpen }: NavbarProps) {
+export default function Navbar({ onCartOpen, onSearchOpen, onNavigate }: NavbarProps) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const totalItems = useCartStore((s) => s.totalItems)
+
+  function handleNavClick(action: string) {
+    setMobileOpen(false)
+    onNavigate(action)
+  }
 
   return (
     <nav className="flex items-center justify-between py-6">
       {/* Brand */}
-      <div className="flex items-center gap-2.5 shrink-0">
+      <button
+        onClick={() => handleNavClick('top')}
+        className="flex items-center gap-2.5 shrink-0 bg-transparent border-none cursor-pointer p-0"
+        aria-label="Go to top"
+      >
         <BrandMark className="shrink-0" />
-        <span className="font-[family-name:var(--font-fraunces)] font-semibold text-[1.35rem] tracking-[-0.01em]">
+        <span className="font-[family-name:var(--font-fraunces)] font-semibold text-[1.35rem] tracking-[-0.01em] text-ink">
           Bloom &amp; Bow
         </span>
-      </div>
+      </button>
 
       {/* Desktop nav links */}
       <ul className="max-[780px]:hidden flex items-center gap-12 list-none p-0 m-0 text-[0.95rem]">
         {NAV_LINKS.map((link) => (
-          <li key={link}>
-            <a
-              href="#"
-              className="nav-link relative no-underline pb-1 text-ink"
+          <li key={link.action}>
+            <button
+              onClick={() => handleNavClick(link.action)}
+              className="nav-link relative bg-transparent border-none cursor-pointer p-0 pb-1 text-ink font-medium text-[0.95rem]"
             >
-              {link}
-            </a>
+              {link.label}
+            </button>
           </li>
         ))}
       </ul>
@@ -108,14 +128,13 @@ export default function Navbar({ onCartOpen, onSearchOpen }: NavbarProps) {
             </SheetHeader>
             <nav className="flex flex-col gap-1 mt-4">
               {NAV_LINKS.map((link) => (
-                <a
-                  key={link}
-                  href="#"
-                  className="px-3 py-2.5 rounded-lg text-ink no-underline font-medium hover:bg-paper-warm transition-colors"
-                  onClick={() => setMobileOpen(false)}
+                <button
+                  key={link.action}
+                  onClick={() => handleNavClick(link.action)}
+                  className="px-3 py-2.5 rounded-lg text-ink font-medium hover:bg-paper-warm transition-colors cursor-pointer bg-transparent border-none text-left"
                 >
-                  {link}
-                </a>
+                  {link.label}
+                </button>
               ))}
             </nav>
           </SheetContent>

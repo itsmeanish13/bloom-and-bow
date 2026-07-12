@@ -1,6 +1,11 @@
 'use client'
 
-export default function Hero() {
+interface HeroProps {
+  onBrowseShop: () => void
+  onBuildBouquet: () => void
+}
+
+export default function Hero({ onBrowseShop, onBuildBouquet }: HeroProps) {
   return (
     <header className="grid grid-cols-[1.05fr_0.95fr] max-[900px]:grid-cols-1 items-center gap-[5.5rem] max-[900px]:gap-8 py-12 pb-[5.5rem] max-[900px]:pb-12">
       {/* Left column — text */}
@@ -34,13 +39,16 @@ export default function Hero() {
 
         {/* CTA buttons */}
         <div className="flex gap-4 items-center flex-wrap">
-          <a
-            href="#products"
-            className="inline-flex items-center gap-2 font-bold text-[0.95rem] px-7 py-3.5 rounded-full bg-berry text-white no-underline shadow-[0_1px_0_rgba(0,0,0,0.08)] transition-all duration-200 hover:bg-berry-deep hover:-translate-y-0.5 hover:shadow-[0_8px_18px_-8px_rgba(178,58,82,0.55)] active:translate-y-0"
+          <button
+            onClick={onBrowseShop}
+            className="inline-flex items-center gap-2 font-bold text-[0.95rem] px-7 py-3.5 rounded-full bg-berry text-white no-underline shadow-[0_1px_0_rgba(0,0,0,0.08)] transition-all duration-200 hover:bg-berry-deep hover:-translate-y-0.5 hover:shadow-[0_8px_18px_-8px_rgba(178,58,82,0.55)] active:translate-y-0 cursor-pointer border-none"
           >
             Browse the shop &rarr;
-          </a>
-          <button className="inline-flex items-center gap-2 font-bold text-[0.95rem] px-7 py-3.5 rounded-full bg-transparent text-ink border-[1.5px] border-twine cursor-pointer transition-all duration-200 hover:border-ink hover:bg-paper-warm">
+          </button>
+          <button
+            onClick={onBuildBouquet}
+            className="inline-flex items-center gap-2 font-bold text-[0.95rem] px-7 py-3.5 rounded-full bg-transparent text-ink border-[1.5px] border-twine cursor-pointer transition-all duration-200 hover:border-ink hover:bg-paper-warm"
+          >
             Build a bouquet
           </button>
         </div>
