@@ -173,3 +173,35 @@ Stage Summary:
 - Cart Drawer → Checkout: ✅ verified (click "Proceed to checkout" → /checkout)
 - Checkout Form → Order Placed: ✅ verified (fill form → place order → success screen, order BB-260712-2360 saved to DB)
 - All ESLint checks pass
+
+---
+Task ID: 9
+Agent: main + fullstack-developer subagent
+Task: Build admin panel for order management and store oversight
+
+Work Log:
+- Added ADMIN_PASSWORD=bloom2024 to .env
+- Created src/lib/admin-auth.ts — password verification + SHA-256 token generation/validation
+- Created src/lib/admin-api.ts — requireAdmin() helper for protecting admin API routes
+- Created 6 admin API routes:
+  - POST /api/admin/login — password auth, sets httpOnly cookie (24hr expiry)
+  - POST /api/admin/logout — clears admin cookie
+  - GET /api/admin/stats — dashboard stats (total/today orders, revenue, pending count, recent 5)
+  - GET /api/admin/orders — all orders with ?status= filter, includes order items
+  - PATCH /api/admin/orders/[id] — update order status with validation (placed→preparing→out_for_delivery→delivered, any→cancelled)
+  - GET /api/admin/newsletter — all subscriber emails
+- Created src/app/admin/page.tsx — complete single-page admin panel:
+  - Login screen with password input and error display
+  - Collapsible sidebar (Dashboard, Orders, Newsletter, Logout)
+  - Dashboard tab: 4 stat cards + recent orders table
+  - Orders tab: 6 status filter buttons, full orders table with status badges, action buttons for status updates, order detail dialog (recipient info, delivery details, items, payment info)
+  - Newsletter tab: subscriber count, email table, "Copy All Emails" button
+
+Stage Summary:
+- Admin panel fully functional at /admin (password: bloom2024)
+- Login → Dashboard verified ✅
+- Order status update (Placed → Preparing) verified ✅
+- Order detail dialog verified ✅ (shows recipient, address, delivery slot, items, payment info)
+- Newsletter tab verified ✅
+- All API routes returning 200, no console errors
+- ESLint clean
