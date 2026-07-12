@@ -1,5 +1,6 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
 import { Minus, Plus, Trash2, ShoppingBag } from 'lucide-react'
 import { useCartStore } from '@/store/cart-store'
 import { formatPrice } from '@/lib/types'
@@ -18,11 +19,17 @@ interface CartDrawerProps {
 }
 
 export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
+  const router = useRouter()
   const items = useCartStore((s) => s.items)
   const updateQty = useCartStore((s) => s.updateQty)
   const removeItem = useCartStore((s) => s.removeItem)
   const totalPrice = useCartStore((s) => s.totalPrice)
   const totalItems = useCartStore((s) => s.totalItems)
+
+  function handleCheckout() {
+    onOpenChange(false)
+    router.push('/checkout')
+  }
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -105,6 +112,7 @@ export default function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
                 </span>
               </div>
               <button
+                onClick={handleCheckout}
                 className="w-full inline-flex items-center justify-center gap-2 font-bold text-[0.95rem] px-7 py-3.5 rounded-full bg-berry text-white border-none cursor-pointer shadow-[0_1px_0_rgba(0,0,0,0.08)] transition-all duration-200 hover:bg-berry-deep hover:-translate-y-0.5 hover:shadow-[0_8px_18px_-8px_rgba(178,58,82,0.55)] active:translate-y-0"
               >
                 Proceed to checkout

@@ -1,5 +1,6 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
 import type { Product } from '@/lib/types'
 import { formatPrice } from '@/lib/types'
 
@@ -90,8 +91,20 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product, onAdd }: ProductCardProps) {
+  const router = useRouter()
+
+  function handleCardClick() {
+    router.push(`/product/${product.id}`)
+  }
+
   return (
-    <article className="bb-card bg-white rounded-[18px] border border-twine-light overflow-hidden">
+    <article
+      className="bb-card bg-white rounded-[18px] border border-twine-light overflow-hidden cursor-pointer"
+      onClick={handleCardClick}
+      role="link"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === 'Enter') handleCardClick() }}
+    >
       {/* Card image area */}
       <div className="relative flex items-center justify-center bg-paper-warm" style={{ aspectRatio: '4 / 3.1' }}>
         {product.badges.length > 0 && (
@@ -113,7 +126,10 @@ export default function ProductCard({ product, onAdd }: ProductCardProps) {
           <button
             className="add-btn-rotate w-9 h-9 rounded-full border-[1.5px] border-ink bg-white cursor-pointer text-lg leading-none transition-all duration-200 hover:bg-ink hover:text-white"
             aria-label={`Add ${product.title} to cart`}
-            onClick={() => onAdd(product)}
+            onClick={(e) => {
+              e.stopPropagation()
+              onAdd(product)
+            }}
           >
             +
           </button>

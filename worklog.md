@@ -151,3 +151,25 @@ Stage Summary:
 - Dialog-based navigation for Build a Bouquet and Track Order
 - VLM confirmed 11 distinct sections, rated complete website 8/10
 - All interactions verified with agent browser
+---
+Task ID: 8
+Agent: main
+Task: Fix search to navigate to product detail + create checkout/payment flow
+
+Work Log:
+- Read and analyzed existing search-dialog.tsx, cart-drawer.tsx, product-card.tsx, page.tsx, types.ts
+- Created API route `/api/products/[id]/route.ts` — single product lookup with related products
+- Created API route `/api/orders/route.ts` — POST endpoint for order creation with validation, unique order number generation, transaction-based item creation
+- Created product detail page `/product/[id]/page.tsx` — full product page with large SVG art, badges, stock status, occasion tags, delivery info, quantity selector, add to cart, and related products section
+- Created checkout page `/checkout/page.tsx` — complete checkout flow with recipient details form, delivery address, delivery slot selector (Same Day/Next Day/Scheduled), optional gift note, order summary sidebar with delivery fee calculation, COD payment method, order placement with loading state, and order success confirmation
+- Fixed `search-dialog.tsx` — clicking a search result now navigates to the product detail page instead of adding to cart
+- Fixed `cart-drawer.tsx` — "Proceed to checkout" button now navigates to `/checkout` page
+- Fixed `product-card.tsx` — entire card is now clickable (navigates to product detail), "+" button uses stopPropagation to still add to cart
+
+Stage Summary:
+- Search → Product Detail: ✅ verified (search "rosy" → click result → navigates to /product/[id])
+- Product Card Click → Product Detail: ✅ verified (click card → navigates to /product/[id])
+- Add to Cart from Product Detail: ✅ verified (cart count updates)
+- Cart Drawer → Checkout: ✅ verified (click "Proceed to checkout" → /checkout)
+- Checkout Form → Order Placed: ✅ verified (fill form → place order → success screen, order BB-260712-2360 saved to DB)
+- All ESLint checks pass

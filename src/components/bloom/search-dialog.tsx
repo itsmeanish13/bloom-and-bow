@@ -1,10 +1,10 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
 import { Search } from 'lucide-react'
 import type { Product } from '@/lib/types'
 import { formatPrice } from '@/lib/types'
-import { useCartStore } from '@/store/cart-store'
 import {
   Dialog,
   DialogContent,
@@ -24,8 +24,8 @@ export default function SearchDialog({
   onOpenChange,
   products,
 }: SearchDialogProps) {
+  const router = useRouter()
   const [query, setQuery] = useState('')
-  const addItem = useCartStore((s) => s.addItem)
 
   const results = useMemo(() => {
     if (!query.trim()) return []
@@ -37,6 +37,12 @@ export default function SearchDialog({
         p.category.includes(q)
     )
   }, [query, products])
+
+  function handleSelect(product: Product) {
+    onOpenChange(false)
+    setQuery('')
+    router.push(`/product/${product.id}`)
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -78,11 +84,7 @@ export default function SearchDialog({
             <button
               key={product.id}
               className="w-full flex items-center gap-4 p-3 rounded-xl text-left hover:bg-paper-warm transition-colors cursor-pointer border-none bg-transparent"
-              onClick={() => {
-                addItem(product)
-                onOpenChange(false)
-                setQuery('')
-              }}
+              onClick={() => handleSelect(product)}
             >
               {/* Mini SVG art */}
               <div className="w-12 h-12 rounded-lg bg-paper-warm flex items-center justify-center shrink-0 overflow-hidden">
