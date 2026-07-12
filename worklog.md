@@ -205,3 +205,62 @@ Stage Summary:
 - Newsletter tab verified ✅
 - All API routes returning 200, no console errors
 - ESLint clean
+
+---
+Task ID: 14
+Agent: main
+Task: Add Products and Categories management tabs to admin panel overlay
+
+Work Log:
+- Completely rewrote `/home/z/my-project/src/components/bloom/admin-panel.tsx` (1104 → ~1050 lines)
+- Updated Tab type: `"dashboard" | "products" | "categories" | "orders" | "newsletter"`
+- Added new types: Category, CategoryFormData, Product, ProductFormData
+- Added new helpers: formatStockStatus (In Stock/Made to Order/Sold Out), stockBadgeClass (green/yellow/red)
+- Updated SidebarNav: 5 nav items (Dashboard, Products, Categories, Orders, Newsletter) + Close Panel button in sidebar footer
+- Updated DashboardTab: 6 stat cards (added Total Products + Categories), grid changed to 3-col on xl
+- Added CategoriesTab: full CRUD with table (Name, Slug, Products Count, Status, Sort Order, Actions), CategoryFormDialog, AlertDialog delete confirmation
+- Added ProductsTab: filter bar (category select, status select, debounced search), product table, ProductFormDialog with all fields (title, description, category dropdown, price in Rs with paisa conversion, image URL + file upload via /api/admin/upload, stock status select, occasion checkboxes, comma-separated badges, sort order), AlertDialog delete confirmation
+- Close button behavior: unauthenticated = absolute X top-right z-110, authenticated = Close Panel in sidebar footer + X in mobile header
+- Ran `bunx prisma generate` to fix missing db.category in Prisma client
+- ESLint: 0 errors
+
+Stage Summary:
+- Admin overlay now has 5 tabs: Dashboard, Products, Categories, Orders, Newsletter
+- Products tab supports full CRUD with category/status/search filtering, image upload, occasion multi-select
+- Categories tab supports full CRUD with active/inactive status and sort order
+- Dashboard shows 6 stat cards including product and category counts
+- Responsive sidebar with mobile hamburger menu
+- Pre-existing backend note: /api/admin/stats needs dev server restart to pick up regenerated Prisma client with Category model
+
+---
+Task ID: 1-7
+Agent: main
+Task: Add Products & Categories management to admin panel, fix hydration error
+
+Work Log:
+- Verified hydration mismatch was already fixed in navbar.tsx using useSyncExternalStore
+- Added Category model to Prisma schema with name, slug, description, isActive, sortOrder, products relation
+- Added categoryId + categoryRef relation to Product model
+- Pushed schema to DB with `bun run db:push`
+- Seeded default categories: "Flowers" and "Little Gifts"
+- Created 6 new admin API endpoints:
+  - GET/POST /api/admin/categories — list + create categories
+  - PATCH/DELETE /api/admin/categories/[id] — update + delete categories
+  - GET/POST /api/admin/products — list (with filters) + create products
+  - PATCH/DELETE /api/admin/products/[id] — update + delete products
+  - POST /api/admin/upload — image file upload to /public/uploads
+- Updated /api/admin/stats to include totalProducts and totalCategories
+- Completely rewrote admin-panel.tsx (2249 lines) with 5 tabs:
+  - Dashboard: 6 stat cards (added Total Products, Categories)
+  - Products: CRUD with filters (category, status, search), form dialog with all fields including file upload, occasion checkboxes
+  - Categories: CRUD with table, form dialog (name, description, sortOrder, active switch)
+  - Orders: unchanged
+  - Newsletter: unchanged
+- Regenerated Prisma client and restarted dev server
+- Verified with Agent Browser: login, all 5 tabs, product create/delete, category dialog
+
+Stage Summary:
+- Admin panel now has full product and category management
+- All APIs return correct responses (200/201)
+- No hydration errors on homepage
+- No lint errors

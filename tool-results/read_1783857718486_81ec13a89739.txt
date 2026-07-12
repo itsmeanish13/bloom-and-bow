@@ -1,0 +1,1085 @@
+     1→"use client";
+     2→
+     3→import { useState, useEffect, useCallback } from "react";
+     4→import { format } from "date-fns";
+     5→import { toast } from "sonner";
+     6→import {
+     7→  LogOut,
+     8→  LayoutDashboard,
+     9→  ShoppingBag,
+    10→  Mail,
+    11→  Package,
+    12→  ChevronRight,
+    13→  Eye,
+    14→  X,
+    15→  Copy,
+    16→  Check,
+    17→  Menu,
+    18→  Flower2,
+    19→  Users,
+    20→  TrendingUp,
+    21→  Clock,
+    22→  AlertCircle,
+    23→} from "lucide-react";
+    24→
+    25→import { Button } from "@/components/ui/button";
+    26→import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+    27→import { Input } from "@/components/ui/input";
+    28→import { Badge } from "@/components/ui/badge";
+    29→import {
+    30→  Dialog,
+    31→  DialogContent,
+    32→  DialogHeader,
+    33→  DialogTitle,
+    34→} from "@/components/ui/dialog";
+    35→import {
+    36→  Table,
+    37→  TableBody,
+    38→  TableCell,
+    39→  TableHead,
+    40→  TableHeader,
+    41→  TableRow,
+    42→} from "@/components/ui/table";
+    43→import { Separator } from "@/components/ui/separator";
+    44→import { Skeleton } from "@/components/ui/skeleton";
+    45→import { ScrollArea } from "@/components/ui/scroll-area";
+    46→
+    47→// ─── Types ───────────────────────────────────────────────────────────────────
+    48→
+    49→interface OrderItem {
+    50→  title: string;
+    51→  price: number;
+    52→  qty: number;
+    53→}
+    54→
+    55→interface Order {
+    56→  id: string;
+    57→  orderNumber: string;
+    58→  recipientName: string;
+    59→  recipientPhone: string;
+    60→  address: string;
+    61→  city: string;
+    62→  landmark: string | null;
+    63→  giftNote: string | null;
+    64→  deliverySlot: string;
+    65→  paymentMethod: string;
+    66→  paymentStatus: string;
+    67→  totalAmount: number;
+    68→  status: string;
+    69→  createdAt: string;
+    70→  updatedAt: string;
+    71→  items: OrderItem[];
+    72→}
+    73→
+    74→interface Stats {
+    75→  totalOrders: number;
+    76→  todayOrders: number;
+    77→  pendingOrders: number;
+    78→  totalRevenue: number;
+    79→  todayRevenue: number;
+    80→  recentOrders: {
+    81→    id: string;
+    82→    orderNumber: string;
+    83→    recipientName: string;
+    84→    totalAmount: number;
+    85→    status: string;
+    86→    createdAt: string;
+    87→  }[];
+    88→}
+    89→
+    90→interface Subscriber {
+    91→  id: string;
+    92→  email: string;
+    93→  createdAt: string;
+    94→}
+    95→
+    96→type Tab = "dashboard" | "orders" | "newsletter";
+    97→
+    98→// ─── Helpers ─────────────────────────────────────────────────────────────────
+    99→
+   100→function formatPrice(paisa: number): string {
+   101→  const rupees = paisa / 100;
+   102→  return `Rs ${rupees.toLocaleString("en-NP")}`;
+   103→}
+   104→
+   105→function formatSlot(slot: string): string {
+   106→  const map: Record<string, string> = {
+   107→    same_day: "Same Day",
+   108→    next_day: "Next Day",
+   109→    scheduled: "Scheduled",
+   110→  };
+   111→  return map[slot] || slot;
+   112→}
+   113→
+   114→function formatStatus(status: string): string {
+   115→  const map: Record<string, string> = {
+   116→    placed: "Placed",
+   117→    preparing: "Preparing",
+   118→    out_for_delivery: "Out for Delivery",
+   119→    delivered: "Delivered",
+   120→    cancelled: "Cancelled",
+   121→  };
+   122→  return map[status] || status;
+   123→}
+   124→
+   125→function statusBadgeClass(status: string): string {
+   126→  switch (status) {
+   127→    case "placed":
+   128→      return "bg-butter text-ink border-butter";
+   129→    case "preparing":
+   130→      return "bg-butter/70 text-ink border-butter/70";
+   131→    case "out_for_delivery":
+   132→      return "bg-sage text-white border-sage";
+   133→    case "delivered":
+   134→      return "bg-ink/10 text-ink border-ink/10";
+   135→    case "cancelled":
+   136→      return "bg-berry/15 text-berry border-berry/15";
+   137→    default:
+   138→      return "bg-muted text-ink-soft border-muted";
+   139→  }
+   140→}
+   141→
+   142→const STATUS_FLOW: Record<string, string[]> = {
+   143→  placed: ["preparing", "cancelled"],
+   144→  preparing: ["out_for_delivery", "cancelled"],
+   145→  out_for_delivery: ["delivered", "cancelled"],
+   146→  delivered: ["cancelled"],
+   147→  cancelled: [],
+   148→};
+   149→
+   150→const FILTER_TABS = [
+   151→  { value: "all", label: "All" },
+   152→  { value: "placed", label: "Placed" },
+   153→  { value: "preparing", label: "Preparing" },
+   154→  { value: "out_for_delivery", label: "Out for Delivery" },
+   155→  { value: "delivered", label: "Delivered" },
+   156→  { value: "cancelled", label: "Cancelled" },
+   157→];
+   158→
+   159→// ─── Login Screen ────────────────────────────────────────────────────────────
+   160→
+   161→function LoginScreen({ onLogin }: { onLogin: () => void }) {
+   162→  const [password, setPassword] = useState("");
+   163→  const [loading, setLoading] = useState(false);
+   164→  const [error, setError] = useState("");
+   165→
+   166→  const handleSubmit = async (e: React.FormEvent) => {
+   167→    e.preventDefault();
+   168→    setError("");
+   169→    setLoading(true);
+   170→
+   171→    try {
+   172→      const res = await fetch("/api/admin/login", {
+   173→        method: "POST",
+   174→        headers: { "Content-Type": "application/json" },
+   175→        body: JSON.stringify({ password }),
+   176→      });
+   177→
+   178→      const data = await res.json();
+   179→
+   180→      if (res.ok && data.success) {
+   181→        onLogin();
+   182→        toast.success("Welcome back!");
+   183→      } else {
+   184→        setError(data.error || "Invalid password");
+   185→      }
+   186→    } catch {
+   187→      setError("Something went wrong. Please try again.");
+   188→    } finally {
+   189→      setLoading(false);
+   190→    }
+   191→  };
+   192→
+   193→  return (
+   194→    <div className="min-h-screen bg-paper flex items-center justify-center p-4">
+   195→      <Card className="w-full max-w-sm border-twine-light shadow-none">
+   196→        <CardContent className="pt-8 pb-6 px-8">
+   197→          <div className="flex flex-col items-center mb-8">
+   198→            <div className="w-14 h-14 rounded-full bg-berry flex items-center justify-center mb-4">
+   199→              <Flower2 className="w-7 h-7 text-white" />
+   200→            </div>
+   201→            <h1 className="font-[family-name:var(--font-fraunces)] text-2xl text-ink">
+   202→              Bloom &amp; Bow
+   203→            </h1>
+   204→            <p className="text-ink-soft text-sm mt-1 font-[family-name:var(--font-karla)]">
+   205→              Admin Panel
+   206→            </p>
+   207→          </div>
+   208→
+   209→          <form onSubmit={handleSubmit} className="space-y-4">
+   210→            <div>
+   211→              <label className="block text-sm font-medium text-ink mb-1.5 font-[family-name:var(--font-karla)]">
+   212→                Password
+   213→              </label>
+   214→              <Input
+   215→                type="password"
+   216→                placeholder="Enter admin password"
+   217→                value={password}
+   218→                onChange={(e) => setPassword(e.target.value)}
+   219→                className="border-twine-light bg-white focus-visible:ring-berry/30 font-[family-name:var(--font-karla)]"
+   220→              />
+   221→            </div>
+   222→
+   223→            {error && (
+   224→              <div className="flex items-center gap-2 text-berry text-sm">
+   225→                <AlertCircle className="w-4 h-4 shrink-0" />
+   226→                <span>{error}</span>
+   227→              </div>
+   228→            )}
+   229→
+   230→            <Button
+   231→              type="submit"
+   232→              disabled={loading || !password}
+   233→              className="w-full bg-berry hover:bg-berry-deep text-white font-[family-name:var(--font-karla)]"
+   234→            >
+   235→              {loading ? "Signing in..." : "Sign In"}
+   236→            </Button>
+   237→          </form>
+   238→        </CardContent>
+   239→      </Card>
+   240→    </div>
+   241→  );
+   242→}
+   243→
+   244→// ─── Sidebar ─────────────────────────────────────────────────────────────────
+   245→
+   246→function SidebarNav({
+   247→  activeTab,
+   248→  onTabChange,
+   249→  onLogout,
+   250→  collapsed,
+   251→  onToggle,
+   252→}: {
+   253→  activeTab: Tab;
+   254→  onTabChange: (tab: Tab) => void;
+   255→  onLogout: () => void;
+   256→  collapsed: boolean;
+   257→  onToggle: () => void;
+   258→}) {
+   259→  const navItems = [
+   260→    { id: "dashboard" as Tab, label: "Dashboard", icon: LayoutDashboard },
+   261→    { id: "orders" as Tab, label: "Orders", icon: ShoppingBag },
+   262→    { id: "newsletter" as Tab, label: "Newsletter", icon: Mail },
+   263→  ];
+   264→
+   265→  return (
+   266→    <>
+   267→      {/* Mobile top bar */}
+   268→      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-white border-b border-twine-light px-4 py-3 flex items-center justify-between">
+   269→        <div className="flex items-center gap-2">
+   270→          <div className="w-8 h-8 rounded-full bg-berry flex items-center justify-center">
+   271→            <Flower2 className="w-4 h-4 text-white" />
+   272→          </div>
+   273→          <span className="font-[family-name:var(--font-fraunces)] text-lg text-ink">
+   274→            B&amp;B
+   275→          </span>
+   276→        </div>
+   277→        <Button variant="ghost" size="icon" onClick={onToggle}>
+   278→          <Menu className="w-5 h-5 text-ink" />
+   279→        </Button>
+   280→      </div>
+   281→
+   282→      {/* Mobile overlay */}
+   283→      {collapsed && (
+   284→        <div
+   285→          className="lg:hidden fixed inset-0 z-40 bg-ink/30 backdrop-blur-sm"
+   286→          onClick={onToggle}
+   287→        />
+   288→      )}
+   289→
+   290→      {/* Sidebar */}
+   291→      <aside
+   292→        className={`
+   293→          fixed top-0 left-0 z-50 h-full bg-white border-r border-twine-light
+   294→          transition-transform duration-300 ease-in-out
+   295→          lg:translate-x-0 lg:static lg:z-auto
+   296→          ${collapsed ? "translate-x-0" : "-translate-x-full"}
+   297→          w-64 flex flex-col
+   298→        `}
+   299→      >
+   300→        {/* Logo */}
+   301→        <div className="px-6 py-6 border-b border-twine-light">
+   302→          <div className="flex items-center justify-between">
+   303→            <div className="flex items-center gap-3">
+   304→              <div className="w-10 h-10 rounded-full bg-berry flex items-center justify-center">
+   305→                <Flower2 className="w-5 h-5 text-white" />
+   306→              </div>
+   307→              <div>
+   308→                <h2 className="font-[family-name:var(--font-fraunces)] text-lg text-ink leading-tight">
+   309→                  Bloom &amp; Bow
+   310→                </h2>
+   311→                <span className="text-xs text-ink-soft font-[family-name:var(--font-karla)]">
+   312→                  Admin
+   313→                </span>
+   314→              </div>
+   315→            </div>
+   316→            <Button
+   317→              variant="ghost"
+   318→              size="icon"
+   319→              className="lg:hidden"
+   320→              onClick={onToggle}
+   321→            >
+   322→              <X className="w-4 h-4 text-ink" />
+   323→            </Button>
+   324→          </div>
+   325→        </div>
+   326→
+   327→        {/* Navigation */}
+   328→        <nav className="flex-1 px-3 py-4 space-y-1">
+   329→          {navItems.map((item) => {
+   330→            const Icon = item.icon;
+   331→            const isActive = activeTab === item.id;
+   332→            return (
+   333→              <button
+   334→                key={item.id}
+   335→                onClick={() => {
+   336→                  onTabChange(item.id);
+   337→                  onToggle();
+   338→                }}
+   339→                className={`
+   340→                  w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium
+   341→                  transition-colors font-[family-name:var(--font-karla)]
+   342→                  ${
+   343→                    isActive
+   344→                      ? "bg-berry/10 text-berry"
+   345→                      : "text-ink-soft hover:bg-paper-warm hover:text-ink"
+   346→                  }
+   347→                `}
+   348→              >
+   349→                <Icon className="w-5 h-5" />
+   350→                <span>{item.label}</span>
+   351→                {isActive && (
+   352→                  <ChevronRight className="w-4 h-4 ml-auto" />
+   353→                )}
+   354→              </button>
+   355→            );
+   356→          })}
+   357→        </nav>
+   358→
+   359→        {/* Logout */}
+   360→        <div className="px-3 py-4 border-t border-twine-light">
+   361→          <button
+   362→            onClick={onLogout}
+   363→            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium
+   364→              text-ink-soft hover:bg-berry/10 hover:text-berry transition-colors
+   365→              font-[family-name:var(--font-karla)]"
+   366→          >
+   367→            <LogOut className="w-5 h-5" />
+   368→            <span>Logout</span>
+   369→          </button>
+   370→        </div>
+   371→      </aside>
+   372→    </>
+   373→  );
+   374→}
+   375→
+   376→// ─── Dashboard Tab ───────────────────────────────────────────────────────────
+   377→
+   378→function DashboardTab() {
+   379→  const [stats, setStats] = useState<Stats | null>(null);
+   380→  const [loading, setLoading] = useState(true);
+   381→
+   382→  useEffect(() => {
+   383→    (async () => {
+   384→      try {
+   385→        const res = await fetch("/api/admin/stats");
+   386→        if (res.ok) {
+   387→          const data = await res.json();
+   388→          setStats(data);
+   389→        } else {
+   390→          toast.error("Failed to load dashboard");
+   391→        }
+   392→      } catch {
+   393→        toast.error("Failed to load dashboard");
+   394→      } finally {
+   395→        setLoading(false);
+   396→      }
+   397→    })();
+   398→  }, []);
+   399→
+   400→  if (loading) {
+   401→    return (
+   402→      <div className="space-y-6">
+   403→        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+   404→          {[...Array(4)].map((_, i) => (
+   405→            <Card key={i} className="border-twine-light shadow-none">
+   406→              <CardContent className="p-5">
+   407→                <Skeleton className="h-4 w-24 mb-3" />
+   408→                <Skeleton className="h-8 w-16" />
+   409→              </CardContent>
+   410→            </Card>
+   411→          ))}
+   412→        </div>
+   413→        <Card className="border-twine-light shadow-none">
+   414→          <CardContent className="p-5">
+   415→            <Skeleton className="h-5 w-40 mb-4" />
+   416→            <Skeleton className="h-40 w-full" />
+   417→          </CardContent>
+   418→        </Card>
+   419→      </div>
+   420→    );
+   421→  }
+   422→
+   423→  if (!stats) return null;
+   424→
+   425→  const statCards = [
+   426→    {
+   427→      label: "Total Orders",
+   428→      value: stats.totalOrders,
+   429→      icon: ShoppingBag,
+   430→      color: "text-berry",
+   431→      bg: "bg-berry/10",
+   432→    },
+   433→    {
+   434→      label: "Today's Orders",
+   435→      value: stats.todayOrders,
+   436→      icon: Clock,
+   437→      color: "text-sage",
+   438→      bg: "bg-sage/10",
+   439→    },
+   440→    {
+   441→      label: "Total Revenue",
+   442→      value: formatPrice(stats.totalRevenue),
+   443→      icon: TrendingUp,
+   444→      color: "text-ink",
+   445→      bg: "bg-ink/10",
+   446→      mono: true,
+   447→    },
+   448→    {
+   449→      label: "Pending Deliveries",
+   450→      value: stats.pendingOrders,
+   451→      icon: Package,
+   452→      color: "text-ink-soft",
+   453→      bg: "bg-butter/20",
+   454→    },
+   455→  ];
+   456→
+   457→  return (
+   458→    <div className="space-y-6">
+   459→      {/* Stat Cards */}
+   460→      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+   461→        {statCards.map((card) => {
+   462→          const Icon = card.icon;
+   463→          return (
+   464→            <Card
+   465→              key={card.label}
+   466→              className="border-twine-light shadow-none hover:shadow-sm transition-shadow"
+   467→            >
+   468→              <CardContent className="p-5">
+   469→                <div className="flex items-start justify-between">
+   470→                  <div>
+   471→                    <p className="text-sm text-ink-soft font-[family-name:var(--font-karla)]">
+   472→                      {card.label}
+   473→                    </p>
+   474→                    <p
+   475→                      className={`text-2xl font-bold mt-1 ${
+   476→                        card.mono
+   477→                          ? "font-[family-name:var(--font-space-mono)]"
+   478→                          : "font-[family-name:var(--font-fraunces)]"
+   479→                      } ${card.color}`}
+   480→                    >
+   481→                      {card.value}
+   482→                    </p>
+   483→                  </div>
+   484→                  <div className={`p-2.5 rounded-lg ${card.bg}`}>
+   485→                    <Icon className={`w-5 h-5 ${card.color}`} />
+   486→                  </div>
+   487→                </div>
+   488→              </CardContent>
+   489→            </Card>
+   490→          );
+   491→        })}
+   492→      </div>
+   493→
+   494→      {/* Recent Orders */}
+   495→      <Card className="border-twine-light shadow-none">
+   496→        <CardHeader className="pb-3">
+   497→          <CardTitle className="font-[family-name:var(--font-fraunces)] text-lg text-ink">
+   498→            Recent Orders
+   499→          </CardTitle>
+   500→        </CardHeader>
+   501→        <CardContent className="p-0">
+   502→          {stats.recentOrders.length === 0 ? (
+   503→            <div className="px-5 py-10 text-center text-ink-soft font-[family-name:var(--font-karla)]">
+   504→              No orders yet
+   505→            </div>
+   506→          ) : (
+   507→            <Table>
+   508→              <TableHeader>
+   509→                <TableRow className="border-twine-light hover:bg-transparent">
+   510→                  <TableHead className="text-ink-soft font-medium">Order #</TableHead>
+   511→                  <TableHead className="text-ink-soft font-medium">Recipient</TableHead>
+   512→                  <TableHead className="text-ink-soft font-medium">Total</TableHead>
+   513→                  <TableHead className="text-ink-soft font-medium">Status</TableHead>
+   514→                  <TableHead className="text-ink-soft font-medium">Date</TableHead>
+   515→                </TableRow>
+   516→              </TableHeader>
+   517→              <TableBody>
+   518→                {stats.recentOrders.map((order) => (
+   519→                  <TableRow key={order.id} className="border-twine-light">
+   520→                    <TableCell className="font-[family-name:var(--font-space-mono)] text-xs text-ink">
+   521→                      {order.orderNumber}
+   522→                    </TableCell>
+   523→                    <TableCell className="font-[family-name:var(--font-karla)] text-ink">
+   524→                      {order.recipientName}
+   525→                    </TableCell>
+   526→                    <TableCell className="font-[family-name:var(--font-space-mono)] text-xs text-ink">
+   527→                      {formatPrice(order.totalAmount)}
+   528→                    </TableCell>
+   529→                    <TableCell>
+   530→                      <span
+   531→                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium border ${statusBadgeClass(order.status)}`}
+   532→                      >
+   533→                        {formatStatus(order.status)}
+   534→                      </span>
+   535→                    </TableCell>
+   536→                    <TableCell className="text-ink-soft text-sm font-[family-name:var(--font-karla)]">
+   537→                      {format(new Date(order.createdAt), "MMM d, yyyy")}
+   538→                    </TableCell>
+   539→                  </TableRow>
+   540→                ))}
+   541→              </TableBody>
+   542→            </Table>
+   543→          )}
+   544→        </CardContent>
+   545→      </Card>
+   546→    </div>
+   547→  );
+   548→}
+   549→
+   550→// ─── Order Detail Dialog ─────────────────────────────────────────────────────
+   551→
+   552→function OrderDetailDialog({
+   553→  order,
+   554→  open,
+   555→  onClose,
+   556→}: {
+   557→  order: Order | null;
+   558→  open: boolean;
+   559→  onClose: () => void;
+   560→}) {
+   561→  if (!order) return null;
+   562→
+   563→  return (
+   564→    <Dialog open={open} onOpenChange={onClose}>
+   565→      <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto border-twine-light bg-white">
+   566→        <DialogHeader>
+   567→          <DialogTitle className="font-[family-name:var(--font-fraunces)] text-lg text-ink">
+   568→            Order {order.orderNumber}
+   569→          </DialogTitle>
+   570→        </DialogHeader>
+   571→
+   572→        <div className="space-y-4 mt-2">
+   573→          {/* Status */}
+   574→          <div className="flex items-center justify-between">
+   575→            <span className="text-sm text-ink-soft font-[family-name:var(--font-karla)]">
+   576→              Status
+   577→            </span>
+   578→            <span
+   579→              className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium border ${statusBadgeClass(order.status)}`}
+   580→            >
+   581→              {formatStatus(order.status)}
+   582→            </span>
+   583→          </div>
+   584→
+   585→          <Separator className="bg-twine-light" />
+   586→
+   587→          {/* Recipient Info */}
+   588→          <div className="space-y-3">
+   589→            <h4 className="text-sm font-semibold text-ink font-[family-name:var(--font-karla)]">
+   590→              Recipient
+   591→            </h4>
+   592→            <div className="grid grid-cols-2 gap-y-2 gap-x-4 text-sm">
+   593→              <span className="text-ink-soft">Name</span>
+   594→              <span className="text-ink font-[family-name:var(--font-karla)]">
+   595→                {order.recipientName}
+   596→              </span>
+   597→              <span className="text-ink-soft">Phone</span>
+   598→              <span className="text-ink font-[family-name:var(--font-space-mono)] text-xs">
+   599→                {order.recipientPhone}
+   600→              </span>
+   601→              <span className="text-ink-soft">Address</span>
+   602→              <span className="text-ink font-[family-name:var(--font-karla)]">
+   603→                {order.address}
+   604→                {order.city ? `, ${order.city}` : ""}
+   605→                {order.landmark ? ` (${order.landmark})` : ""}
+   606→              </span>
+   607→            </div>
+   608→          </div>
+   609→
+   610→          <Separator className="bg-twine-light" />
+   611→
+   612→          {/* Delivery Info */}
+   613→          <div className="space-y-3">
+   614→            <h4 className="text-sm font-semibold text-ink font-[family-name:var(--font-karla)]">
+   615→              Delivery
+   616→            </h4>
+   617→            <div className="grid grid-cols-2 gap-y-2 gap-x-4 text-sm">
+   618→              <span className="text-ink-soft">Slot</span>
+   619→              <span className="text-ink font-[family-name:var(--font-karla)]">
+   620→                {formatSlot(order.deliverySlot)}
+   621→              </span>
+   622→              <span className="text-ink-soft">Payment</span>
+   623→              <span className="text-ink font-[family-name:var(--font-karla)]">
+   624→                {order.paymentMethod === "cod" ? "Cash on Delivery" : order.paymentMethod}
+   625→              </span>
+   626→              <span className="text-ink-soft">Payment Status</span>
+   627→              <span className="text-ink font-[family-name:var(--font-karla)] capitalize">
+   628→                {order.paymentStatus}
+   629→              </span>
+   630→            </div>
+   631→          </div>
+   632→
+   633→          <Separator className="bg-twine-light" />
+   634→
+   635→          {/* Gift Note */}
+   636→          {order.giftNote && (
+   637→            <>
+   638→              <div className="space-y-2">
+   639→                <h4 className="text-sm font-semibold text-ink font-[family-name:var(--font-karla)]">
+   640→                  Gift Note
+   641→                </h4>
+   642→                <p className="text-sm text-ink-soft bg-paper-warm rounded-lg p-3 font-[family-name:var(--font-karla)] italic">
+   643→                  &ldquo;{order.giftNote}&rdquo;
+   644→                </p>
+   645→              </div>
+   646→              <Separator className="bg-twine-light" />
+   647→            </>
+   648→          )}
+   649→
+   650→          {/* Items */}
+   651→          <div className="space-y-3">
+   652→            <h4 className="text-sm font-semibold text-ink font-[family-name:var(--font-karla)]">
+   653→              Items
+   654→            </h4>
+   655→            <div className="space-y-2">
+   656→              {order.items.map((item, i) => (
+   657→                <div
+   658→                  key={i}
+   659→                  className="flex items-center justify-between text-sm py-1.5 border-b border-twine-light/50 last:border-0"
+   660→                >
+   661→                  <div className="flex items-center gap-3">
+   662→                    <span className="w-6 h-6 rounded-full bg-sage/15 text-sage flex items-center justify-center text-xs font-bold">
+   663→                      {item.qty}
+   664→                    </span>
+   665→                    <span className="text-ink font-[family-name:var(--font-karla)]">
+   666→                      {item.title}
+   667→                    </span>
+   668→                  </div>
+   669→                  <span className="text-ink font-[family-name:var(--font-space-mono)] text-xs">
+   670→                    {formatPrice(item.price * item.qty)}
+   671→                  </span>
+   672→                </div>
+   673→              ))}
+   674→            </div>
+   675→            <div className="flex items-center justify-between pt-2 border-t border-twine-light">
+   676→              <span className="text-sm font-semibold text-ink font-[family-name:var(--font-karla)]">
+   677→                Total
+   678→              </span>
+   679→              <span className="text-base font-bold text-ink font-[family-name:var(--font-space-mono)]">
+   680→                {formatPrice(order.totalAmount)}
+   681→              </span>
+   682→            </div>
+   683→          </div>
+   684→
+   685→          {/* Timestamps */}
+   686→          <div className="text-xs text-ink-soft font-[family-name:var(--font-space-mono)] pt-2">
+   687→            Created: {format(new Date(order.createdAt), "MMM d, yyyy 'at' h:mm a")}
+   688→          </div>
+   689→        </div>
+   690→      </DialogContent>
+   691→    </Dialog>
+   692→  );
+   693→}
+   694→
+   695→// ─── Orders Tab ──────────────────────────────────────────────────────────────
+   696→
+   697→function OrdersTab() {
+   698→  const [orders, setOrders] = useState<Order[]>([]);
+   699→  const [loading, setLoading] = useState(true);
+   700→  const [activeFilter, setActiveFilter] = useState("all");
+   701→  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+   702→  const [updatingId, setUpdatingId] = useState<string | null>(null);
+   703→
+   704→  const fetchOrders = useCallback(async (status: string) => {
+   705→    setLoading(true);
+   706→    try {
+   707→      const query = status !== "all" ? `?status=${status}` : "";
+   708→      const res = await fetch(`/api/admin/orders${query}`);
+   709→      if (res.ok) {
+   710→        const data = await res.json();
+   711→        setOrders(data);
+   712→      } else if (res.status === 401) {
+   713→        toast.error("Session expired. Please log in again.");
+   714→      } else {
+   715→        toast.error("Failed to load orders");
+   716→      }
+   717→    } catch {
+   718→      toast.error("Failed to load orders");
+   719→    } finally {
+   720→      setLoading(false);
+   721→    }
+   722→  }, []);
+   723→
+   724→  useEffect(() => {
+   725→    fetchOrders(activeFilter);
+   726→  }, [activeFilter, fetchOrders]);
+   727→
+   728→  const handleStatusUpdate = async (orderId: string, newStatus: string) => {
+   729→    setUpdatingId(orderId);
+   730→    try {
+   731→      const res = await fetch(`/api/admin/orders/${orderId}`, {
+   732→        method: "PATCH",
+   733→        headers: { "Content-Type": "application/json" },
+   734→        body: JSON.stringify({ status: newStatus }),
+   735→      });
+   736→
+   737→      if (res.ok) {
+   738→        toast.success(`Order updated to ${formatStatus(newStatus)}`);
+   739→        fetchOrders(activeFilter);
+   740→      } else {
+   741→        toast.error("Failed to update order");
+   742→      }
+   743→    } catch {
+   744→      toast.error("Failed to update order");
+   745→    } finally {
+   746→      setUpdatingId(null);
+   747→    }
+   748→  };
+   749→
+   750→  return (
+   751→    <div className="space-y-4">
+   752→      {/* Filter Tabs */}
+   753→      <div className="flex flex-wrap gap-2">
+   754→        {FILTER_TABS.map((tab) => (
+   755→          <Button
+   756→            key={tab.value}
+   757→            variant={activeFilter === tab.value ? "default" : "outline"}
+   758→            size="sm"
+   759→            onClick={() => setActiveFilter(tab.value)}
+   760→            className={
+   761→              activeFilter === tab.value
+   762→                ? "bg-berry hover:bg-berry-deep text-white border-berry font-[family-name:var(--font-karla)]"
+   763→                : "border-twine-light text-ink-soft hover:bg-paper-warm hover:text-ink font-[family-name:var(--font-karla)]"
+   764→            }
+   765→          >
+   766→            {tab.label}
+   767→          </Button>
+   768→        ))}
+   769→      </div>
+   770→
+   771→      {/* Orders Table */}
+   772→      <Card className="border-twine-light shadow-none">
+   773→        <CardContent className="p-0">
+   774→          {loading ? (
+   775→            <div className="p-5 space-y-3">
+   776→              {[...Array(5)].map((_, i) => (
+   777→                <Skeleton key={i} className="h-12 w-full" />
+   778→              ))}
+   779→            </div>
+   780→          ) : orders.length === 0 ? (
+   781→            <div className="px-5 py-16 text-center text-ink-soft font-[family-name:var(--font-karla)]">
+   782→              <ShoppingBag className="w-10 h-10 mx-auto mb-3 opacity-30" />
+   783→              <p>No orders found</p>
+   784→            </div>
+   785→          ) : (
+   786→            <ScrollArea className="max-h-[calc(100vh-320px)]">
+   787→              <Table>
+   788→                <TableHeader>
+   789→                  <TableRow className="border-twine-light hover:bg-transparent">
+   790→                    <TableHead className="text-ink-soft font-medium">Order #</TableHead>
+   791→                    <TableHead className="text-ink-soft font-medium">Recipient</TableHead>
+   792→                    <TableHead className="text-ink-soft font-medium hidden md:table-cell">Phone</TableHead>
+   793→                    <TableHead className="text-ink-soft font-medium hidden lg:table-cell">Items</TableHead>
+   794→                    <TableHead className="text-ink-soft font-medium">Total</TableHead>
+   795→                    <TableHead className="text-ink-soft font-medium">Status</TableHead>
+   796→                    <TableHead className="text-ink-soft font-medium hidden sm:table-cell">Date</TableHead>
+   797→                    <TableHead className="text-ink-soft font-medium text-right">Actions</TableHead>
+   798→                  </TableRow>
+   799→                </TableHeader>
+   800→                <TableBody>
+   801→                  {orders.map((order) => (
+   802→                    <TableRow key={order.id} className="border-twine-light">
+   803→                      <TableCell className="font-[family-name:var(--font-space-mono)] text-xs text-ink">
+   804→                        {order.orderNumber}
+   805→                      </TableCell>
+   806→                      <TableCell className="font-[family-name:var(--font-karla)] text-ink max-w-[120px] truncate">
+   807→                        {order.recipientName}
+   808→                      </TableCell>
+   809→                      <TableCell className="font-[family-name:var(--font-space-mono)] text-xs text-ink-soft hidden md:table-cell">
+   810→                        {order.recipientPhone}
+   811→                      </TableCell>
+   812→                      <TableCell className="hidden lg:table-cell">
+   813→                        <span className="text-xs text-ink-soft font-[family-name:var(--font-karla)]">
+   814→                          {order.items.length} item{order.items.length !== 1 ? "s" : ""}
+   815→                        </span>
+   816→                      </TableCell>
+   817→                      <TableCell className="font-[family-name:var(--font-space-mono)] text-xs text-ink">
+   818→                        {formatPrice(order.totalAmount)}
+   819→                      </TableCell>
+   820→                      <TableCell>
+   821→                        <span
+   822→                          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium border ${statusBadgeClass(order.status)}`}
+   823→                        >
+   824→                          {formatStatus(order.status)}
+   825→                        </span>
+   826→                      </TableCell>
+   827→                      <TableCell className="text-ink-soft text-sm font-[family-name:var(--font-karla)] hidden sm:table-cell">
+   828→                        {format(new Date(order.createdAt), "MMM d")}
+   829→                      </TableCell>
+   830→                      <TableCell className="text-right">
+   831→                        <div className="flex items-center justify-end gap-1">
+   832→                          <Button
+   833→                            variant="ghost"
+   834→                            size="icon"
+   835→                            className="h-8 w-8 text-ink-soft hover:text-ink hover:bg-paper-warm"
+   836→                            onClick={() => setSelectedOrder(order)}
+   837→                          >
+   838→                            <Eye className="w-4 h-4" />
+   839→                          </Button>
+   840→                          {STATUS_FLOW[order.status]?.map((nextStatus) => (
+   841→                            <Button
+   842→                              key={nextStatus}
+   843→                              variant="ghost"
+   844→                              size="sm"
+   845→                              disabled={updatingId === order.id}
+   846→                              onClick={() => handleStatusUpdate(order.id, nextStatus)}
+   847→                              className="h-8 text-xs font-[family-name:var(--font-karla)] text-sage hover:text-sage-deep hover:bg-sage/10"
+   848→                            >
+   849→                              {nextStatus === "cancelled"
+   850→                                ? "Cancel"
+   851→                                : `→ ${formatStatus(nextStatus)}`}
+   852→                            </Button>
+   853→                          ))}
+   854→                        </div>
+   855→                      </TableCell>
+   856→                    </TableRow>
+   857→                  ))}
+   858→                </TableBody>
+   859→              </Table>
+   860→            </ScrollArea>
+   861→          )}
+   862→        </CardContent>
+   863→      </Card>
+   864→
+   865→      <OrderDetailDialog
+   866→        order={selectedOrder}
+   867→        open={!!selectedOrder}
+   868→        onClose={() => setSelectedOrder(null)}
+   869→      />
+   870→    </div>
+   871→  );
+   872→}
+   873→
+   874→// ─── Newsletter Tab ──────────────────────────────────────────────────────────
+   875→
+   876→function NewsletterTab() {
+   877→  const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
+   878→  const [loading, setLoading] = useState(true);
+   879→  const [copied, setCopied] = useState(false);
+   880→
+   881→  useEffect(() => {
+   882→    (async () => {
+   883→      try {
+   884→        const res = await fetch("/api/admin/newsletter");
+   885→        if (res.ok) {
+   886→          const data = await res.json();
+   887→          setSubscribers(data);
+   888→        } else {
+   889→          toast.error("Failed to load subscribers");
+   890→        }
+   891→      } catch {
+   892→        toast.error("Failed to load subscribers");
+   893→      } finally {
+   894→        setLoading(false);
+   895→      }
+   896→    })();
+   897→  }, []);
+   898→
+   899→  const handleCopyAll = async () => {
+   900→    const emails = subscribers.map((s) => s.email).join(", ");
+   901→    try {
+   902→      await navigator.clipboard.writeText(emails);
+   903→      setCopied(true);
+   904→      toast.success(`${subscribers.length} emails copied to clipboard`);
+   905→      setTimeout(() => setCopied(false), 2000);
+   906→    } catch {
+   907→      toast.error("Failed to copy emails");
+   908→    }
+   909→  };
+   910→
+   911→  return (
+   912→    <div className="space-y-4">
+   913→      {/* Header with count and copy */}
+   914→      <div className="flex items-center justify-between">
+   915→        <div className="flex items-center gap-3">
+   916→          <Users className="w-5 h-5 text-ink-soft" />
+   917→          <h2 className="text-sm text-ink-soft font-[family-name:var(--font-karla)]">
+   918→            Total Subscribers:
+   919→          </h2>
+   920→          <span className="font-[family-name:var(--font-fraunces)] text-xl text-ink font-bold">
+   921→            {loading ? (
+   922→              <Skeleton className="h-7 w-8 inline-block" />
+   923→            ) : (
+   924→              subscribers.length
+   925→            )}
+   926→          </span>
+   927→        </div>
+   928→        <Button
+   929→          variant="outline"
+   930→          size="sm"
+   931→          onClick={handleCopyAll}
+   932→          disabled={subscribers.length === 0 || copied}
+   933→          className="border-twine-light text-ink-soft hover:bg-paper-warm hover:text-ink font-[family-name:var(--font-karla)]"
+   934→        >
+   935→          {copied ? (
+   936→            <>
+   937→              <Check className="w-4 h-4 mr-1.5 text-sage" />
+   938→              Copied!
+   939→            </>
+   940→          ) : (
+   941→            <>
+   942→              <Copy className="w-4 h-4 mr-1.5" />
+   943→              Copy All Emails
+   944→            </>
+   945→          )}
+   946→        </Button>
+   947→      </div>
+   948→
+   949→      {/* Subscribers List */}
+   950→      <Card className="border-twine-light shadow-none">
+   951→        <CardContent className="p-0">
+   952→          {loading ? (
+   953→            <div className="p-5 space-y-3">
+   954→              {[...Array(5)].map((_, i) => (
+   955→                <Skeleton key={i} className="h-12 w-full" />
+   956→              ))}
+   957→            </div>
+   958→          ) : subscribers.length === 0 ? (
+   959→            <div className="px-5 py-16 text-center text-ink-soft font-[family-name:var(--font-karla)]">
+   960→              <Mail className="w-10 h-10 mx-auto mb-3 opacity-30" />
+   961→              <p>No subscribers yet</p>
+   962→            </div>
+   963→          ) : (
+   964→            <ScrollArea className="max-h-[calc(100vh-260px)]">
+   965→              <Table>
+   966→                <TableHeader>
+   967→                  <TableRow className="border-twine-light hover:bg-transparent">
+   968→                    <TableHead className="text-ink-soft font-medium">#</TableHead>
+   969→                    <TableHead className="text-ink-soft font-medium">Email</TableHead>
+   970→                    <TableHead className="text-ink-soft font-medium">Subscribed</TableHead>
+   971→                  </TableRow>
+   972→                </TableHeader>
+   973→                <TableBody>
+   974→                  {subscribers.map((sub, i) => (
+   975→                    <TableRow key={sub.id} className="border-twine-light">
+   976→                      <TableCell className="text-ink-soft text-xs font-[family-name:var(--font-space-mono)]">
+   977→                        {i + 1}
+   978→                      </TableCell>
+   979→                      <TableCell className="text-ink font-[family-name:var(--font-karla)]">
+   980→                        {sub.email}
+   981→                      </TableCell>
+   982→                      <TableCell className="text-ink-soft text-sm font-[family-name:var(--font-karla)]">
+   983→                        {format(new Date(sub.createdAt), "MMM d, yyyy")}
+   984→                      </TableCell>
+   985→                    </TableRow>
+   986→                  ))}
+   987→                </TableBody>
+   988→              </Table>
+   989→            </ScrollArea>
+   990→          )}
+   991→        </CardContent>
+   992→      </Card>
+   993→    </div>
+   994→  );
+   995→}
+   996→
+   997→// ─── Main Admin Page ─────────────────────────────────────────────────────────
+   998→
+   999→export default function AdminPage() {
+  1000→  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  1001→  const [checkingAuth, setCheckingAuth] = useState(true);
+  1002→  const [activeTab, setActiveTab] = useState<Tab>("dashboard");
+  1003→  const [sidebarOpen, setSidebarOpen] = useState(false);
+  1004→
+  1005→  // Check existing auth on mount
+  1006→  useEffect(() => {
+  1007→    (async () => {
+  1008→      try {
+  1009→        const res = await fetch("/api/admin/stats");
+  1010→        if (res.ok) {
+  1011→          setIsAuthenticated(true);
+  1012→        }
+  1013→      } catch {
+  1014→        // Not authenticated
+  1015→      } finally {
+  1016→        setCheckingAuth(false);
+  1017→      }
+  1018→    })();
+  1019→  }, []);
+  1020→
+  1021→  const handleLogin = () => {
+  1022→    setIsAuthenticated(true);
+  1023→  };
+  1024→
+  1025→  const handleLogout = async () => {
+  1026→    try {
+  1027→      await fetch("/api/admin/logout", { method: "POST" });
+  1028→    } catch {
+  1029→      // ignore
+  1030→    }
+  1031→    setIsAuthenticated(false);
+  1032→    toast.success("Logged out");
+  1033→  };
+  1034→
+  1035→  // Show loading while checking auth
+  1036→  if (checkingAuth) {
+  1037→    return (
+  1038→      <div className="min-h-screen bg-paper flex items-center justify-center">
+  1039→        <div className="w-10 h-10 rounded-full bg-berry/20 animate-pulse" />
+  1040→      </div>
+  1041→    );
+  1042→  }
+  1043→
+  1044→  if (!isAuthenticated) {
+  1045→    return <LoginScreen onLogin={handleLogin} />;
+  1046→  }
+  1047→
+  1048→  return (
+  1049→    <div className="min-h-screen bg-paper flex">
+  1050→      <SidebarNav
+  1051→        activeTab={activeTab}
+  1052→        onTabChange={setActiveTab}
+  1053→        onLogout={handleLogout}
+  1054→        collapsed={sidebarOpen}
+  1055→        onToggle={() => setSidebarOpen((p) => !p)}
+  1056→      />
+  1057→
+  1058→      <main className="flex-1 min-w-0">
+  1059→        {/* Mobile header spacer */}
+  1060→        <div className="h-14 lg:hidden" />
+  1061→
+  1062→        <div className="p-4 sm:p-6 lg:p-8 max-w-7xl">
+  1063→          {/* Page Header */}
+  1064→          <div className="mb-6">
+  1065→            <h1 className="font-[family-name:var(--font-fraunces)] text-2xl sm:text-3xl text-ink">
+  1066→              {activeTab === "dashboard" && "Dashboard"}
+  1067→              {activeTab === "orders" && "Orders"}
+  1068→              {activeTab === "newsletter" && "Newsletter"}
+  1069→            </h1>
+  1070→            <p className="text-sm text-ink-soft mt-1 font-[family-name:var(--font-karla)]">
+  1071→              {activeTab === "dashboard" && "Overview of your store performance"}
+  1072→              {activeTab === "orders" && "Manage and track all customer orders"}
+  1073→              {activeTab === "newsletter" && "View your email subscribers"}
+  1074→            </p>
+  1075→          </div>
+  1076→
+  1077→          {/* Tab Content */}
+  1078→          {activeTab === "dashboard" && <DashboardTab />}
+  1079→          {activeTab === "orders" && <OrdersTab />}
+  1080→          {activeTab === "newsletter" && <NewsletterTab />}
+  1081→        </div>
+  1082→      </main>
+  1083→    </div>
+  1084→  );
+  1085→}

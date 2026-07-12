@@ -19,6 +19,8 @@ export async function GET(request: NextRequest) {
       allOrders,
       todayOrderData,
       recentOrders,
+      totalProducts,
+      totalCategories,
     ] = await Promise.all([
       db.order.count(),
       db.order.count({ where: { createdAt: { gte: today, lt: tomorrow } } }),
@@ -44,6 +46,8 @@ export async function GET(request: NextRequest) {
           createdAt: true,
         },
       }),
+      db.product.count(),
+      db.category.count(),
     ]);
 
     return NextResponse.json({
@@ -52,6 +56,8 @@ export async function GET(request: NextRequest) {
       pendingOrders,
       totalRevenue: allOrders._sum.totalAmount || 0,
       todayRevenue: todayOrderData._sum.totalAmount || 0,
+      totalProducts,
+      totalCategories,
       recentOrders: recentOrders.map((o) => ({
         ...o,
         totalAmount: Number(o.totalAmount),

@@ -19,20 +19,34 @@ model User {
   orders       Order[]
 }
 
+model Category {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  slug      String    @unique
+  description String?
+  isActive  Boolean   @default(true)
+  sortOrder Int       @default(0)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  products  Product[]
+}
+
 model Product {
-  id          String   @id @default(cuid())
-  slug        String   @unique
+  id          String    @id @default(cuid())
+  slug        String    @unique
   title       String
   description String
-  category    String   @default("flowers")
-  occasions   String   @default("[]")
+  category    String    @default("flowers")
+  categoryId  String?
+  categoryRef Category? @relation(fields: [categoryId], references: [id])
+  occasions   String    @default("[]")
   price       Int
   imageUrl    String?
-  stockStatus String   @default("in_stock")
-  badges      String   @default("[]")
-  sortOrder   Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  stockStatus String    @default("in_stock")
+  badges      String    @default("[]")
+  sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
   orderItems  OrderItem[]
 }
 
