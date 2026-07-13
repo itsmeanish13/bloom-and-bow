@@ -3,11 +3,13 @@ export interface Product {
   slug: string;
   title: string;
   description: string;
-  category: "flowers" | "gifts";
+  category: string;
+  categoryId: string | null;
+  categoryRef?: { id: string; name: string; slug: string } | null;
   occasions: string[];
   price: number;
   imageUrl: string | null;
-  stockStatus: "in_stock" | "made_to_order" | "sold_out";
+  stockStatus: string;
   badges: string[];
   sortOrder: number;
   createdAt: string;

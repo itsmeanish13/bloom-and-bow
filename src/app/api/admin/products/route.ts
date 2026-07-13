@@ -13,9 +13,17 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get("search");
 
     const where: Record<string, unknown> = {};
+
+    // Support filtering by categoryId (from admin dropdown) or category string
     if (category && category !== "all") {
-      where.category = category;
+      // Check if it looks like a cuid (categoryId)
+      if (category.startsWith("c") && category.length > 10) {
+        where.categoryId = category;
+      } else {
+        where.category = category;
+      }
     }
+
     if (status && status !== "all") {
       where.stockStatus = status;
     }
@@ -74,12 +82,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Product with similar name already exists" }, { status: 409 });
     }
 
+    // Determine category string: use provided category or derive from categoryRef
+    let categoryStr = category || "flowers";
+    if (!category && categoryId) {
+      const catRef = await db.category.findUnique({ where: { id: categoryId }, select: { slug: true } });
+      if (catRef) categoryStr = catRef.slug;
+    }
+
     const product = await db.product.create({
       data: {
         slug,
         title: title.trim(),
         description: description?.trim() || "",
-        category: category || "flowers",
+        category: categoryStr,
         categoryId: categoryId || null,
         occasions: JSON.stringify(occasions || []),
         price: Math.round(price),

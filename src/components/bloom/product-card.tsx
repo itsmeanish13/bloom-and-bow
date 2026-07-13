@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import type { Product } from '@/lib/types'
 import { formatPrice } from '@/lib/types'
 
@@ -108,17 +109,27 @@ export default function ProductCard({ product, onAdd }: ProductCardProps) {
       {/* Card image area */}
       <div className="relative flex items-center justify-center bg-paper-warm" style={{ aspectRatio: '4 / 3.1' }}>
         {product.badges.length > 0 && (
-          <span className="absolute top-3 left-3 font-[family-name:var(--font-space-mono)] text-[0.65rem] bg-butter text-ink px-2.5 py-1 rounded-full uppercase tracking-[0.04em]">
+          <span className="absolute top-3 left-3 font-[family-name:var(--font-space-mono)] text-[0.65rem] bg-butter text-ink px-2.5 py-1 rounded-full uppercase tracking-[0.04em] z-10">
             {product.badges[0]}
           </span>
         )}
-        <ProductArt slug={product.slug} />
+        {product.imageUrl ? (
+          <Image
+            src={product.imageUrl}
+            alt={product.title}
+            fill
+            className="object-cover"
+            sizes="(max-width: 560px) 100vw, (max-width: 900px) 50vw, 33vw"
+          />
+        ) : (
+          <ProductArt slug={product.slug} />
+        )}
       </div>
 
       {/* Card body */}
       <div className="p-4 pb-6">
         <h3 className="font-bold text-[1.02rem] mb-1 mt-0">{product.title}</h3>
-        <p className="text-ink-soft text-[0.88rem] mb-4 mt-0">{product.description}</p>
+        <p className="text-ink-soft text-[0.88rem] mb-4 mt-0 line-clamp-2">{product.description}</p>
         <div className="flex items-center justify-between">
           <span className="font-[family-name:var(--font-space-mono)] font-bold text-berry-deep">
             {formatPrice(product.price)}

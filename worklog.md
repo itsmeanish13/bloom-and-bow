@@ -312,3 +312,30 @@ Stage Summary:
   - src/app/api/admin/upload/route.ts - created missing upload endpoint
   - src/components/ui/select.tsx - z-index fix (from earlier)
 - All APIs verified working with token auth via curl
+
+---
+Task ID: 3
+Agent: Main Agent
+Task: Display admin-added categories and products on the main site
+
+Work Log:
+- Created `/api/categories` public endpoint — returns active categories (id, name, slug, description)
+- Updated `/api/products` public endpoint to support `categoryId` query parameter for filtering
+- Updated `page.tsx` — replaced hardcoded category filter tabs with dynamic tabs fetched from `/api/categories`
+- Updated `product-card.tsx` — added Next.js Image component to show actual uploaded images (with fallback to SVG art)
+- Updated `product-grid.tsx` — added empty state with icon and helpful message
+- Updated `Product` type in `types.ts` — changed `category` from union type to string, added `categoryId` and `categoryRef` fields
+- Fixed admin `/api/admin/products` to properly detect categoryId vs category string in filter param
+- Fixed admin product creation to auto-derive `category` string from categoryRef slug when not provided
+- Updated `admin-panel.tsx` — changed adminFetch header to lowercase `x-admin-token`, added `credentials: "include"`
+- Linked all 9 legacy products (categoryId=null) to their proper categories in the database
+- Fixed "Barbe Doll" category string from "Dolls" (capital) to "dolls" (slug)
+- Verified via agent-browser: all 10 products display, dynamic category tabs (ALL, FLOWERS, DOLLS, LITTLE GIFTS, TEDDY), category filtering works, admin panel categories/products tabs load correctly
+
+Stage Summary:
+- Main site now dynamically shows all categories from the database as filter tabs
+- Products created in admin immediately appear on the main site
+- Product images uploaded in admin now display on product cards
+- Category filtering uses categoryId for accurate results
+- All 10 products (9 seeded + 1 admin-added) visible on the main site
+- Admin panel verified: login works, categories tab shows 4 categories, products tab shows 10 products

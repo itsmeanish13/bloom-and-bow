@@ -22,6 +22,13 @@ import { useCartStore } from '@/store/cart-store'
 import type { Product } from '@/lib/types'
 import { toast } from 'sonner'
 
+interface Category {
+  id: string
+  name: string
+  slug: string
+  description: string | null
+}
+
 export default function Home() {
   const [cartOpen, setCartOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
@@ -29,7 +36,8 @@ export default function Home() {
   const [trackOrderOpen, setTrackOrderOpen] = useState(false)
   const [adminOpen, setAdminOpen] = useState(false)
   const [selectedOccasion, setSelectedOccasion] = useState<string | null>(null)
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null)
+  const [categories, setCategories] = useState<Category[]>([])
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -44,13 +52,30 @@ export default function Home() {
   const refContact = useRef<HTMLDivElement>(null)
   const refCareers = useRef<HTMLDivElement>(null)
 
+  // Fetch categories
+  useEffect(() => {
+    async function fetchCategories() {
+      try {
+        const res = await fetch('/api/categories')
+        if (res.ok) {
+          const data = await res.json()
+          setCategories(data)
+        }
+      } catch {
+        // Silently fail — fall back to no category tabs
+      }
+    }
+    fetchCategories()
+  }, [])
+
   // Fetch products from API
   useEffect(() => {
     async function fetchProducts() {
+      setLoading(true)
       try {
         const params = new URLSearchParams()
         if (selectedOccasion) params.set('occasion', selectedOccasion)
-        if (selectedCategory) params.set('category', selectedCategory)
+        if (selectedCategoryId) params.set('categoryId', selectedCategoryId)
         const query = params.toString()
         const url = `/api/products${query ? `?${query}` : ''}`
         const res = await fetch(url)
@@ -65,7 +90,7 @@ export default function Home() {
       }
     }
     fetchProducts()
-  }, [selectedOccasion, selectedCategory])
+  }, [selectedOccasion, selectedCategoryId])
 
   // Smooth scroll helper
   function scrollToRef(ref: React.RefObject<HTMLDivElement | null>) {
@@ -83,18 +108,26 @@ export default function Home() {
         case 'top':
           scrollToRef(refTop)
           break
-        case 'flowers':
-          setSelectedCategory('flowers')
+        case 'flowers': {
+          const flowersCat = categories.find(c => c.slug === 'flowers')
+          if (flowersCat) {
+            setSelectedCategoryId(flowersCat.id)
+          }
           setSelectedOccasion(null)
           setTimeout(() => scrollToRef(refProducts), 100)
           break
-        case 'gifts':
-          setSelectedCategory('gifts')
+        }
+        case 'gifts': {
+          const giftsCat = categories.find(c => c.slug === 'gifts')
+          if (giftsCat) {
+            setSelectedCategoryId(giftsCat.id)
+          }
           setSelectedOccasion(null)
           setTimeout(() => scrollToRef(refProducts), 100)
           break
+        }
         case 'occasions':
-          setSelectedCategory(null)
+          setSelectedCategoryId(null)
           setSelectedOccasion(null)
           scrollToRef(refOccasions)
           break
@@ -123,7 +156,7 @@ export default function Home() {
           break
       }
     },
-    []
+    [categories]
   )
 
   const handleAdd = useCallback(
@@ -136,13 +169,18 @@ export default function Home() {
 
   const handleOccasionSelect = useCallback((occasion: string | null) => {
     setSelectedOccasion(occasion)
-    setSelectedCategory(null)
+    setSelectedCategoryId(null)
   }, [])
 
   const handleBrowseShop = useCallback(() => {
-    setSelectedCategory(null)
+    setSelectedCategoryId(null)
     setSelectedOccasion(null)
     setTimeout(() => scrollToRef(refProducts), 50)
+  }, [])
+
+  const handleCategorySelect = useCallback((categoryId: string | null) => {
+    setSelectedCategoryId(categoryId)
+    setSelectedOccasion(null)
   }, [])
 
   return (
@@ -167,40 +205,35 @@ export default function Home() {
 
         <VineDivider />
 
-        {/* Category filter tabs + Occasions */}
+        {/* Dynamic Category filter tabs + Occasions */}
         <div ref={refProducts}>
-          <div className="flex items-center gap-2 mb-6">
-            <button
-              onClick={() => { setSelectedCategory(null); setSelectedOccasion(null) }}
-              className={`font-[family-name:var(--font-space-mono)] text-[0.72rem] tracking-[0.06em] uppercase px-3 py-1.5 rounded-full border transition-all duration-200 cursor-pointer ${
-                !selectedCategory
-                  ? 'bg-ink text-paper border-ink'
-                  : 'bg-transparent text-ink-soft border-twine hover:border-ink'
-              }`}
-            >
-              All
-            </button>
-            <button
-              onClick={() => { setSelectedCategory('flowers'); setSelectedOccasion(null) }}
-              className={`font-[family-name:var(--font-space-mono)] text-[0.72rem] tracking-[0.06em] uppercase px-3 py-1.5 rounded-full border transition-all duration-200 cursor-pointer ${
-                selectedCategory === 'flowers'
-                  ? 'bg-ink text-paper border-ink'
-                  : 'bg-transparent text-ink-soft border-twine hover:border-ink'
-              }`}
-            >
-              Flowers
-            </button>
-            <button
-              onClick={() => { setSelectedCategory('gifts'); setSelectedOccasion(null) }}
-              className={`font-[family-name:var(--font-space-mono)] text-[0.72rem] tracking-[0.06em] uppercase px-3 py-1.5 rounded-full border transition-all duration-200 cursor-pointer ${
-                selectedCategory === 'gifts'
-                  ? 'bg-ink text-paper border-ink'
-                  : 'bg-transparent text-ink-soft border-twine hover:border-ink'
-              }`}
-            >
-              Little Gifts
-            </button>
-          </div>
+          {categories.length > 0 && (
+            <div className="flex items-center gap-2 mb-6 flex-wrap">
+              <button
+                onClick={() => handleCategorySelect(null)}
+                className={`font-[family-name:var(--font-space-mono)] text-[0.72rem] tracking-[0.06em] uppercase px-3 py-1.5 rounded-full border transition-all duration-200 cursor-pointer ${
+                  !selectedCategoryId
+                    ? 'bg-ink text-paper border-ink'
+                    : 'bg-transparent text-ink-soft border-twine hover:border-ink'
+                }`}
+              >
+                All
+              </button>
+              {categories.map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => handleCategorySelect(cat.id)}
+                  className={`font-[family-name:var(--font-space-mono)] text-[0.72rem] tracking-[0.06em] uppercase px-3 py-1.5 rounded-full border transition-all duration-200 cursor-pointer ${
+                    selectedCategoryId === cat.id
+                      ? 'bg-ink text-paper border-ink'
+                      : 'bg-transparent text-ink-soft border-twine hover:border-ink'
+                  }`}
+                >
+                  {cat.name}
+                </button>
+              ))}
+            </div>
+          )}
 
           <div ref={refOccasions}>
             <Occasions

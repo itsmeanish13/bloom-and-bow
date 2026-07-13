@@ -78,9 +78,9 @@ let adminToken: string | null = null;
 function adminFetch(url: string, options: RequestInit = {}): Promise<Response> {
   const headers = new Headers(options.headers);
   if (adminToken) {
-    headers.set("X-Admin-Token", adminToken);
+    headers.set("x-admin-token", adminToken);
   }
-  return fetch(url, { ...options, headers });
+  return fetch(url, { ...options, headers, credentials: "include" });
 }
 
 function setAdminToken(token: string | null) {
