@@ -264,3 +264,24 @@ Stage Summary:
 - All APIs return correct responses (200/201)
 - No hydration errors on homepage
 - No lint errors
+
+---
+Task ID: 1
+Agent: Main Agent
+Task: Fix admin panel Select dropdowns not showing options (stock status, category, filters)
+
+Work Log:
+- Read the entire admin-panel.tsx (2250 lines) to understand the component structure
+- Analyzed all button click handlers for Products and Categories tabs - all correctly wired
+- Identified root cause: z-index stacking conflict between admin panel overlay (z-[100]) and SelectContent portal (z-50)
+- Radix UI Select renders via Portal at document body level, which placed it BEHIND the admin overlay
+- Fixed SelectContent z-index from z-50 to z-[9999] in src/components/ui/select.tsx
+- Created missing /api/admin/upload/route.ts (was returning 404) with proper auth using requireAdmin()
+- Verified all admin APIs work: login, categories, stats, upload auth
+
+Stage Summary:
+- Key fix: Changed SelectContent z-index from `z-50` to `z-[9999]` in select.tsx
+- Created /api/admin/upload/route.ts for image uploads in admin panel
+- This fixes BOTH the "dropdowns not showing" AND the previously reported "CRUD buttons not working" (which was actually the same issue - users couldn't fill forms because dropdowns were invisible)
+- All admin APIs verified working via curl
+- ESLint passes with no errors
