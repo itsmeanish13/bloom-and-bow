@@ -285,3 +285,30 @@ Stage Summary:
 - This fixes BOTH the "dropdowns not showing" AND the previously reported "CRUD buttons not working" (which was actually the same issue - users couldn't fill forms because dropdowns were invisible)
 - All admin APIs verified working via curl
 - ESLint passes with no errors
+
+---
+Task ID: 2
+Agent: Main Agent
+Task: Fix admin panel authentication - cookies not working in iframe/Preview Panel context
+
+Work Log:
+- Diagnosed that httpOnly cookies with sameSite:strict don't work in the Preview Panel iframe
+- After login (200), all subsequent API calls returned 401 because cookies weren't being sent back
+- Updated login API to return token in response body JSON
+- Updated requireAdmin() in admin-api.ts to check both cookie AND X-Admin-Token header
+- Added module-level adminToken variable + adminFetch() wrapper in admin-panel.tsx
+- Replaced ALL 13 admin fetch() calls with adminFetch() (kept login/logout as regular fetch)
+- Changed cookie sameSite from "strict" to "lax"
+- Created missing /api/admin/upload/route.ts with proper requireAdmin auth
+- Verified full token auth flow via curl: login, list categories, list products, create category, delete category
+
+Stage Summary:
+- Root cause: httpOnly cookies in iframe context (Preview Panel) are blocked/not sent back
+- Fix: Token-based auth via X-Admin-Token header as fallback to cookies
+- Files changed:
+  - src/app/api/admin/login/route.ts - return token in response body
+  - src/lib/admin-api.ts - check X-Admin-Token header as fallback
+  - src/components/bloom/admin-panel.tsx - adminFetch wrapper, 13 fetch calls converted
+  - src/app/api/admin/upload/route.ts - created missing upload endpoint
+  - src/components/ui/select.tsx - z-index fix (from earlier)
+- All APIs verified working with token auth via curl

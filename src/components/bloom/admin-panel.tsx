@@ -72,6 +72,21 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
+// ─── Token-based Auth (for iframe/Preview Panel compatibility) ─────────
+let adminToken: string | null = null;
+
+function adminFetch(url: string, options: RequestInit = {}): Promise<Response> {
+  const headers = new Headers(options.headers);
+  if (adminToken) {
+    headers.set("X-Admin-Token", adminToken);
+  }
+  return fetch(url, { ...options, headers });
+}
+
+function setAdminToken(token: string | null) {
+  adminToken = token;
+}
+
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 type Tab = "dashboard" | "products" | "categories" | "orders" | "newsletter";
@@ -311,6 +326,7 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
       const data = await res.json();
 
       if (res.ok && data.success) {
+        setAdminToken(data.token || null);
         onLogin();
         toast.success("Welcome back!");
       } else {
@@ -535,7 +551,7 @@ function DashboardTab() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch("/api/admin/stats");
+        const res = await adminFetch("/api/admin/stats");
         if (res.ok) {
           const data = await res.json();
           setStats(data);
@@ -756,7 +772,7 @@ function CategoryFormDialog({
       const url = category
         ? `/api/admin/categories/${category.id}`
         : "/api/admin/categories";
-      const res = await fetch(url, {
+      const res = await adminFetch(url, {
         method: category ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
@@ -859,7 +875,7 @@ function CategoriesTab() {
   const fetchCategories = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/categories");
+      const res = await adminFetch("/api/admin/categories");
       if (res.ok) {
         const data = await res.json();
         setCategories(data);
@@ -881,7 +897,7 @@ function CategoriesTab() {
     if (!deleteTarget) return;
     setDeleting(true);
     try {
-      const res = await fetch(`/api/admin/categories/${deleteTarget.id}`, {
+      const res = await adminFetch(`/api/admin/categories/${deleteTarget.id}`, {
         method: "DELETE",
       });
       if (res.ok) {
@@ -1084,7 +1100,7 @@ function ProductFormDialog({
       // Fetch categories for dropdown
       (async () => {
         try {
-          const res = await fetch("/api/admin/categories");
+          const res = await adminFetch("/api/admin/categories");
           if (res.ok) setCategories(await res.json());
         } catch {
           // ignore
@@ -1126,7 +1142,7 @@ function ProductFormDialog({
     try {
       const fd = new FormData();
       fd.append("file", file);
-      const res = await fetch("/api/admin/upload", {
+      const res = await adminFetch("/api/admin/upload", {
         method: "POST",
         body: fd,
       });
@@ -1184,7 +1200,7 @@ function ProductFormDialog({
       const url = product
         ? `/api/admin/products/${product.id}`
         : "/api/admin/products";
-      const res = await fetch(url, {
+      const res = await adminFetch(url, {
         method: product ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -1419,7 +1435,7 @@ function ProductsTab() {
       if (statusFilter !== "all") params.set("status", statusFilter);
       if (searchQuery.trim()) params.set("search", searchQuery.trim());
       const query = params.toString() ? `?${params.toString()}` : "";
-      const res = await fetch(`/api/admin/products${query}`);
+      const res = await adminFetch(`/api/admin/products${query}`);
       if (res.ok) {
         const data = await res.json();
         setProducts(data);
@@ -1435,7 +1451,7 @@ function ProductsTab() {
 
   const fetchCategories = useCallback(async () => {
     try {
-      const res = await fetch("/api/admin/categories");
+      const res = await adminFetch("/api/admin/categories");
       if (res.ok) setCategories(await res.json());
     } catch {
       // ignore
@@ -1461,7 +1477,7 @@ function ProductsTab() {
     if (!deleteTarget) return;
     setDeleting(true);
     try {
-      const res = await fetch(`/api/admin/products/${deleteTarget.id}`, {
+      const res = await adminFetch(`/api/admin/products/${deleteTarget.id}`, {
         method: "DELETE",
       });
       if (res.ok) {
@@ -1828,7 +1844,7 @@ function OrdersTab() {
     setLoading(true);
     try {
       const query = status !== "all" ? `?status=${status}` : "";
-      const res = await fetch(`/api/admin/orders${query}`);
+      const res = await adminFetch(`/api/admin/orders${query}`);
       if (res.ok) {
         const data = await res.json();
         setOrders(data);
@@ -1851,7 +1867,7 @@ function OrdersTab() {
   const handleStatusUpdate = async (orderId: string, newStatus: string) => {
     setUpdatingId(orderId);
     try {
-      const res = await fetch(`/api/admin/orders/${orderId}`, {
+      const res = await adminFetch(`/api/admin/orders/${orderId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),
@@ -2004,7 +2020,7 @@ function NewsletterTab() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch("/api/admin/newsletter");
+        const res = await adminFetch("/api/admin/newsletter");
         if (res.ok) {
           const data = await res.json();
           setSubscribers(data);
@@ -2136,7 +2152,7 @@ export default function AdminPanel({ open, onClose }: AdminPanelProps) {
     setCheckingAuth(true);
     (async () => {
       try {
-        const res = await fetch("/api/admin/stats");
+        const res = await adminFetch("/api/admin/stats");
         if (res.ok) {
           setIsAuthenticated(true);
         }
@@ -2153,6 +2169,7 @@ export default function AdminPanel({ open, onClose }: AdminPanelProps) {
   };
 
   const handleLogout = async () => {
+    setAdminToken(null);
     try {
       await fetch("/api/admin/logout", { method: "POST" });
     } catch {

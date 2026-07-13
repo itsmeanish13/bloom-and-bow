@@ -14,10 +14,10 @@ export async function POST(request: NextRequest) {
     }
 
     const token = getAdminToken();
-    const response = NextResponse.json({ success: true });
+    const response = NextResponse.json({ success: true, token });
     response.cookies.set("admin_token", token, {
       httpOnly: true,
-      sameSite: "strict",
+      sameSite: "lax",
       maxAge: 86400,
       path: "/",
     });
