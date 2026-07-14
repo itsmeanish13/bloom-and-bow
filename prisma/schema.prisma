@@ -58,6 +58,7 @@ model Order {
   items         OrderItem[]
   recipientName String
   recipientPhone String
+  recipientEmail String?
   address       String
   city          String      @default("Kathmandu")
   landmark      String?
