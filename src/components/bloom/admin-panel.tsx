@@ -26,6 +26,8 @@ import {
   Search,
   Upload,
   Image as ImageIcon,
+  MessageSquare,
+  Circle,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -89,7 +91,7 @@ function setAdminToken(token: string | null) {
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type Tab = "dashboard" | "products" | "categories" | "orders" | "newsletter";
+type Tab = "dashboard" | "products" | "categories" | "orders" | "newsletter" | "messages";
 
 interface OrderItem {
   title: string;
@@ -137,6 +139,15 @@ interface Stats {
 interface Subscriber {
   id: string;
   email: string;
+  createdAt: string;
+}
+
+interface ContactMessage {
+  id: string;
+  name: string;
+  email: string;
+  message: string;
+  isRead: boolean;
   createdAt: string;
 }
 
@@ -413,6 +424,7 @@ function SidebarNav({
     { id: "categories" as Tab, label: "Categories", icon: Flower2 },
     { id: "orders" as Tab, label: "Orders", icon: ShoppingBag },
     { id: "newsletter" as Tab, label: "Newsletter", icon: Mail },
+    { id: "messages" as Tab, label: "Messages", icon: MessageSquare },
   ];
 
   const handleTabChange = (tab: Tab) => {
@@ -2133,6 +2145,182 @@ function NewsletterTab() {
   );
 }
 
+// ─── Messages Tab ────────────────────────────────────────────────────────────
+
+function MessagesTab() {
+  const [messages, setMessages] = useState<ContactMessage[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState<ContactMessage | null>(null);
+
+  const loadMessages = useCallback(async () => {
+    try {
+      const res = await adminFetch("/api/admin/contact");
+      if (res.ok) {
+        const data = await res.json();
+        setMessages(data);
+      } else {
+        toast.error("Failed to load messages");
+      }
+    } catch {
+      toast.error("Failed to load messages");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadMessages();
+  }, [loadMessages]);
+
+  const handleOpen = async (msg: ContactMessage) => {
+    setSelected(msg);
+    if (!msg.isRead) {
+      setMessages((prev) =>
+        prev.map((m) => (m.id === msg.id ? { ...m, isRead: true } : m))
+      );
+      try {
+        await adminFetch(`/api/admin/contact/${msg.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ isRead: true }),
+        });
+      } catch {
+        // Non-critical; ignore failure to mark as read
+      }
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      const res = await adminFetch(`/api/admin/contact/${id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error();
+      setMessages((prev) => prev.filter((m) => m.id !== id));
+      setSelected(null);
+      toast.success("Message deleted");
+    } catch {
+      toast.error("Failed to delete message");
+    }
+  };
+
+  const unreadCount = messages.filter((m) => !m.isRead).length;
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-3">
+        <MessageSquare className="w-5 h-5 text-ink-soft" />
+        <h2 className="text-sm text-ink-soft font-[family-name:var(--font-karla)]">
+          Total Messages:
+        </h2>
+        <span className="font-[family-name:var(--font-fraunces)] text-xl text-ink font-bold">
+          {loading ? <Skeleton className="h-7 w-8 inline-block" /> : messages.length}
+        </span>
+        {!loading && unreadCount > 0 && (
+          <Badge className="bg-berry text-white border-none">
+            {unreadCount} unread
+          </Badge>
+        )}
+      </div>
+
+      <Card className="border-twine-light shadow-none">
+        <CardContent className="p-0">
+          {loading ? (
+            <div className="p-5 space-y-3">
+              {[...Array(5)].map((_, i) => (
+                <Skeleton key={i} className="h-12 w-full" />
+              ))}
+            </div>
+          ) : messages.length === 0 ? (
+            <div className="px-5 py-16 text-center text-ink-soft font-[family-name:var(--font-karla)]">
+              <MessageSquare className="w-10 h-10 mx-auto mb-3 opacity-30" />
+              <p>No messages yet</p>
+            </div>
+          ) : (
+            <ScrollArea className="max-h-[calc(100vh-260px)]">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-twine-light hover:bg-transparent">
+                    <TableHead className="text-ink-soft font-medium w-8"></TableHead>
+                    <TableHead className="text-ink-soft font-medium">Name</TableHead>
+                    <TableHead className="text-ink-soft font-medium">Email</TableHead>
+                    <TableHead className="text-ink-soft font-medium">Message</TableHead>
+                    <TableHead className="text-ink-soft font-medium">Received</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {messages.map((msg) => (
+                    <TableRow
+                      key={msg.id}
+                      className="border-twine-light cursor-pointer hover:bg-paper-warm"
+                      onClick={() => handleOpen(msg)}
+                    >
+                      <TableCell>
+                        {!msg.isRead && (
+                          <Circle className="w-2 h-2 fill-berry text-berry" />
+                        )}
+                      </TableCell>
+                      <TableCell
+                        className={`font-[family-name:var(--font-karla)] ${
+                          msg.isRead ? "text-ink-soft" : "text-ink font-bold"
+                        }`}
+                      >
+                        {msg.name}
+                      </TableCell>
+                      <TableCell className="text-ink-soft font-[family-name:var(--font-karla)]">
+                        {msg.email}
+                      </TableCell>
+                      <TableCell className="text-ink-soft font-[family-name:var(--font-karla)] max-w-xs truncate">
+                        {msg.message}
+                      </TableCell>
+                      <TableCell className="text-ink-soft text-sm font-[family-name:var(--font-karla)] whitespace-nowrap">
+                        {format(new Date(msg.createdAt), "MMM d, yyyy")}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </ScrollArea>
+          )}
+        </CardContent>
+      </Card>
+
+      <Dialog open={!!selected} onOpenChange={(open) => !open && setSelected(null)}>
+        <DialogContent className="max-w-lg">
+          {selected && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="font-[family-name:var(--font-fraunces)]">
+                  {selected.name}
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-3">
+                <p className="text-sm text-ink-soft font-[family-name:var(--font-karla)]">
+                  {selected.email} &middot;{" "}
+                  {format(new Date(selected.createdAt), "MMM d, yyyy h:mm a")}
+                </p>
+                <p className="text-sm text-ink font-[family-name:var(--font-karla)] whitespace-pre-wrap">
+                  {selected.message}
+                </p>
+              </div>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  className="border-twine-light text-ink-soft hover:bg-paper-warm hover:text-ink"
+                  onClick={() => handleDelete(selected.id)}
+                >
+                  <Trash2 className="w-4 h-4 mr-1.5" />
+                  Delete
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
 // ─── Admin Overlay Component ──────────────────────────────────────────────
 
 interface AdminPanelProps {
@@ -2203,6 +2391,10 @@ export default function AdminPanel({ open, onClose }: AdminPanelProps) {
       title: "Newsletter",
       description: "View your email subscribers",
     },
+    messages: {
+      title: "Messages",
+      description: "View messages sent from the contact form",
+    },
   };
 
   const content = checkingAuth ? (
@@ -2243,6 +2435,7 @@ export default function AdminPanel({ open, onClose }: AdminPanelProps) {
           {activeTab === "categories" && <CategoriesTab />}
           {activeTab === "orders" && <OrdersTab />}
           {activeTab === "newsletter" && <NewsletterTab />}
+          {activeTab === "messages" && <MessagesTab />}
         </div>
       </main>
     </div>

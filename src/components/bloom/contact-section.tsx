@@ -14,13 +14,25 @@ export default function ContactSection() {
     e.preventDefault()
     if (!name || !email || !message) return
     setSending(true)
-    // Simulate send
-    await new Promise((r) => setTimeout(r, 800))
-    toast.success('Message sent! We\'ll get back to you soon.')
-    setName('')
-    setEmail('')
-    setMessage('')
-    setSending(false)
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, message }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.error || 'Failed to send message')
+      }
+      toast.success('Message sent! We\'ll get back to you soon.')
+      setName('')
+      setEmail('')
+      setMessage('')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to send message')
+    } finally {
+      setSending(false)
+    }
   }
 
   return (
